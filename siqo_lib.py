@@ -19,7 +19,9 @@ _IND       = 0
 # Functions
 #------------------------------------------------------------------------------
 def journal( mess, lvl=10 ):
-    'vypise spravu do terminalu'
+    "vypise spravu do terminalu"
+    
+    global _IND
     
     if lvl <= _DEBUG: print( datetime.now().time().strftime('%H:%M:%S ') + _IND*'|  ' + mess )
     
@@ -28,7 +30,7 @@ def journalI( mess, lvl=10 ):
         
     global _IND
         
-    _IND += 1
+    _IND = _IND + 1
     journal( mess, lvl )
     
 #------------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 # :main file
 #------------------------------------------------------------------------------
 from siqo_lib import journal, journalI, journalO
+from space3M  import Space3M
 
 #==============================================================================
 # package's constants
@@ -21,7 +22,8 @@ if __name__ =='__main__':
   
     journal( 'Main loop' )
     
-    
+    st = Space3M('test')
+    st.createSpace( (100, 1, 1, 100), 2 )
     
     
     journal('Main end')
