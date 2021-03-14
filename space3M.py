@@ -9,7 +9,7 @@
 #    phs means phi mod 2*PI in radians
 #
 #------------------------------------------------------------------------------
-from siqo_lib import journal, journalI, journalO
+from siqo_lib import journal
 
 from datetime import datetime
 from math     import sqrt, exp
@@ -41,7 +41,7 @@ class Space3M:
     def __init__(self, name):
         "Call constructor of Space3M and initialise it with empty data"
 
-        journalI( 'Space3M constructor for {}...'.format(name), 10 )
+        journal.I( 'Space3M constructor for {}...'.format(name), 10 )
         
         self.name = name              # unique name for Minkowski space in Your project
         self.mpg  = 1                 # meters       per 1 grid distance
@@ -52,7 +52,7 @@ class Space3M:
 
         self.act  = self.setAct('base')
 
-        journalO( 'Space3M {} created'.format(self.name), 10 )
+        journal.O( 'Space3M {} created'.format(self.name), 10 )
 
     #--------------------------------------------------------------------------
     def clear(self):
@@ -66,7 +66,7 @@ class Space3M:
         self.mpg  = 1                 # meters       per 1 grid distance
         self.spg  = self.mpg / _C     # microseconds per 1 grid distance
 
-        journal( 'Space3M {} ALL cleared'.format(self.name), 10)
+        journal.M( 'Space3M {} ALL cleared'.format(self.name), 10)
         
     #--------------------------------------------------------------------------
     def setAct(self, typ):
@@ -75,7 +75,7 @@ class Space3M:
         if typ == 'base': self.act  = self.base
         if typ == 'blur': self.act  = self.blur
 
-        journal( 'Space3M {} set active dictionary: {}'.format(self.name, typ), 10)
+        journal.M( 'Space3M {} set active dictionary: {}'.format(self.name, typ), 10)
         
     #--------------------------------------------------------------------------
     def getActType(self):
@@ -213,7 +213,7 @@ class Space3M:
     def createSpace(self, shape, mpg ):
         "Create empty grid with shape (ix, iy, iz, it) and set transformations for given meters_per_grid"
         
-        journalI( 'Space3M {} createSpace...'.format(self.name), 10 )
+        journal.I( 'Space3M {} createSpace...'.format(self.name), 10)
         self.clear()
 
         self.mpg  = mpg               # meters       per 1 grid distance
@@ -230,15 +230,28 @@ class Space3M:
                         cell = self.createCellByGrid(grid)
                         i   += 1
         
-        journalO( 'Space3M {} created {} cells'.format(self.name, str(i), 10 ) )
+        journal.O( 'Space3M {} created {} cells'.format(self.name, str(i)), 10)
 
     #==========================================================================
     # Tools for data extraction & persistency
     #--------------------------------------------------------------------------
+    def getJson(self):
+        "Create and return Json list from active dictionary"
+        
+        json = []
+        
+        for id, cell in self.act.items():
+            json.append(cell)
+        
+        journal.M( 'Space3M {} getJson created {} records'.format(self.name, len(json)), 10)
+        
+        return json
+        
+    #--------------------------------------------------------------------------
     def getNumpy(self):
         "Create and return numpy 4D array from active dictionary"
         
-        journal( 'Space3M {} getNumpy'.format(self.name, 10 ))
+        journal.M( 'Space3M {} getNumpy'.format(self.name), 10)
     
 #------------------------------------------------------------------------------
 print('Minkowski space class ver 0.10')

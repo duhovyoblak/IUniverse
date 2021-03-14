@@ -1,7 +1,7 @@
 #==============================================================================
 # :main file
 #------------------------------------------------------------------------------
-from siqo_lib import journal, journalI, journalO
+from siqo_lib import journal
 from space3M  import Space3M
 
 #==============================================================================
@@ -20,13 +20,15 @@ from space3M  import Space3M
 #------------------------------------------------------------------------------
 if __name__ =='__main__':
   
-    journal( 'Main loop' )
+    journal.I( 'Main loop' )
     
     st = Space3M('test')
     st.createSpace( (100, 1, 1, 100), 2 )
     
+    js = st.getJson()
     
-    journal('Main end')
+    
+    journal.O('Main end')
     
 #==============================================================================
 #                              END OF FILE

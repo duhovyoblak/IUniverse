@@ -7,42 +7,56 @@ from  datetime import datetime
 # package's constants
 #------------------------------------------------------------------------------
 
-_DEBUG     = 10   # actual debug level
-_IND       = 0
-
 #==============================================================================
 # package's tools
 #------------------------------------------------------------------------------
 
 
 #==============================================================================
-# Functions
+# Journal
 #------------------------------------------------------------------------------
-def journal( mess, lvl=10 ):
-    "vypise spravu do terminalu"
+class SiqoJournal:
     
-    global _IND
+    #==========================================================================
+    # Constructor & utilities
+    #--------------------------------------------------------------------------
+    def __init__(self, name):
+        "Call constructor of SiqoJournal and initialise it with empty data"
+        
+        self.name       = name
+        self.debugLevel = 10
+        self.indent     = 0
     
-    if lvl <= _DEBUG: print( datetime.now().time().strftime('%H:%M:%S ') + _IND*'|  ' + mess )
+    #--------------------------------------------------------------------------
+    def M(self, mess, lvl=10 ):
+        "vypise spravu do terminalu"
+        
+        if lvl <= self.debugLevel:
+            print( datetime.now().time().strftime('%H:%M:%S ') + self.indent*'|  ' + mess )
     
-#------------------------------------------------------------------------------
-def journalI( mess, lvl=10 ):
+    #--------------------------------------------------------------------------
+    def I(self, mess, lvl=10 ):
         
-    global _IND
-        
-    _IND = _IND + 1
-    journal( mess, lvl )
+        self.M( mess, lvl )
+        self.indent += 1
     
-#------------------------------------------------------------------------------
-def journalO( mess, lvl=10 ):
-        
-    global _IND
-        
-    journal( mess, lvl )
-    _IND -= 1
+    #--------------------------------------------------------------------------
+    def O(self, mess, lvl=10 ):
+    
+        self.indent -= 1
+        self.M( mess, lvl )
   
 #------------------------------------------------------------------------------
-print('Siqo common library ver 0.01')
+journal = SiqoJournal('Journal')
+
+#==============================================================================
+# Journal
+#------------------------------------------------------------------------------
+
+
+
+#------------------------------------------------------------------------------
+print('Siqo common library ver 1.01')
 
 #==============================================================================
 #                              END OF FILE
