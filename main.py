@@ -27,6 +27,12 @@ if __name__ =='__main__':
     
     js = st.getJson()
     
+    i = 0
+    for rec in js:
+        print(rec)
+        i += 1
+        if i > 20: break
+    
     
     journal.O('Main end')
     

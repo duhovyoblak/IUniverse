@@ -20,10 +20,14 @@ from math     import sqrt, exp
 #------------------------------------------------------------------------------
 
 _ERR            = '_ERROR_'
-_SQRT_2PI       = 10
-_REV_SQRT_2PI   = 0
 
-_C              = 299.792458    # spped of light in [meter/microsecond]
+_PI             = 3.141592653589793    # Pi number
+_2PI            = 6.283185307179586
+_SQRT_2PI       = 2.5066282746310002
+_REV_SQRT_2PI   = 0.3989422804014327
+
+_E              = 2.718281828459045    # Euler number
+_C              = 299.792458           # spped of light in [meter/microsecond]
 
 #==============================================================================
 # package's tools
