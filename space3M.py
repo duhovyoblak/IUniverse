@@ -2,7 +2,7 @@
 # Minkowski space class
 #------------------------------------------------------------------------------
 #
-#    real position is given in meters for x,z,y and microsecenods for t as real values
+#    real position is given in meters for x,z,y and nanosecenods for t as real values
 #    grid position means position in numpy-like 4D array as integers 0..ix, 0..iy, 0..iz, 0..it
 #
 #    phi means argument (omega*t - k*x) as real value in radians
@@ -27,7 +27,7 @@ _SQRT_2PI       = 2.5066282746310002
 _REV_SQRT_2PI   = 0.3989422804014327
 
 _E              = 2.718281828459045    # Euler number
-_C              = 299.792458           # spped of light in [meter/microsecond]
+_C              = 0.299792458          # spped of light in [meter/nanosecond]
 
 #==============================================================================
 # package's tools
@@ -51,8 +51,8 @@ class Space3M:
         self.mpg  = 1                 # meters       per 1 grid distance
         self.spg  = self.mpg / _C     # microseconds per 1 grid distance
 
-        self.base = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:(), val:{}, opt:{}}
-        self.blur = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:(), val:{}, opt:{}}
+        self.base = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
+        self.blur = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
 
         self.act  = self.setAct('base')
 
@@ -67,8 +67,8 @@ class Space3M:
 
         self.setAct('base')
 
-        self.mpg  = 1                 # meters       per 1 grid distance
-        self.spg  = self.mpg / _C     # microseconds per 1 grid distance
+        self.mpg  = 1                 # meters      per 1 grid distance
+        self.spg  = self.mpg / _C     # nanoseconds per 1 grid distance
 
         journal.M( 'Space3M {} ALL cleared'.format(self.name), 10)
         
@@ -94,32 +94,32 @@ class Space3M:
     def getGrid(self, pos):
         "Return nearest grid position (indices for numpy arrays) for given real position"
 
-        gx = round(self.mpg * pos[0])
-        gy = round(self.mpg * pos[1])
-        gz = round(self.mpg * pos[2])
-        gt = round(self.spg * pos[3])
+        gx = round(self.mpg * pos['x'])
+        gy = round(self.mpg * pos['y'])
+        gz = round(self.mpg * pos['z'])
+        gt = round(self.spg * pos['t'])
 
-        return (gx, gy, gz, gt)
+        return {'gx':gx, 'gy':gy, 'gz':gz, 'gt':gt}
 
     #--------------------------------------------------------------------------
     def getPos(self, grid):
         "Return real position for given grid position (indices for numpy arrays)"
 
-        x = grid[0] / self.mpg
-        y = grid[1] / self.mpg
-        z = grid[2] / self.mpg
-        t = grid[3] / self.spg
+        x = grid['gx'] / self.mpg
+        y = grid['gy'] / self.mpg
+        z = grid['gz'] / self.mpg
+        t = grid['gt'] / self.spg
 
-        return (x, y, z, t)
+        return {'x':x, 'y':y, 'z':z, 't':t}
 
     #--------------------------------------------------------------------------
     def getMetPos(self, pa, pb):
         "Return metric between two real positions in space-time interval"
 
-        dx = pb[0]-pa[0]
-        dy = pb[1]-pa[1]
-        dz = pb[2]-pa[2]
-        dt = pb[3]-pa[3]
+        dx = pb['x']-pa['x']
+        dy = pb['y']-pa['y']
+        dz = pb['z']-pa['z']
+        dt = pb['t']-pa['t']
 
         return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz - _C*_C*dt*dt)}
 
@@ -127,10 +127,10 @@ class Space3M:
     def getMetGrid(self, ga, gb):
         "Return metric between two grid positions in eucleidian grid distance"
 
-        dx = gb[0]-ga[0]
-        dy = gb[1]-ga[1]
-        dz = gb[2]-ga[2]
-        dt = gb[3]-ga[3]
+        dx = gb['gx']-ga['gx']
+        dy = gb['gy']-ga['gy']
+        dz = gb['gz']-ga['gz']
+        dt = gb['gt']-ga['gt']
 
         return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz + dt*dt)}
 
@@ -140,7 +140,7 @@ class Space3M:
     def getIdFromGrid(self, grid):
         "Create cell's ID from grid position"
         
-        return self.name+ '#' +str(grid[0])+'#'+str(grid[1])+'#'+str(grid[2])+'#'+str(grid[3])
+        return self.name+ '#' +str(grid['gx'])+'#'+str(grid['gy'])+'#'+str(grid['gz'])+'#'+str(grid['gt'])
 
     #--------------------------------------------------------------------------
     def getIdFromPos(self, pos):
@@ -220,8 +220,8 @@ class Space3M:
         journal.I( 'Space3M {} createSpace...'.format(self.name), 10)
         self.clear()
 
-        self.mpg  = mpg               # meters       per 1 grid distance
-        self.spg  = self.mpg / _C     # microseconds per 1 grid distance
+        self.mpg  = mpg               # meters      per 1 grid distance
+        self.spg  = self.mpg / _C     # nanoseconds per 1 grid distance
         
         # Create grid shape
         i = 0
@@ -230,7 +230,7 @@ class Space3M:
                 for iz in range(shape[2]):
                     for it in range(shape[3]):
                         
-                        grid = (ix, iy, iz, it)
+                        grid = {'gx':ix, 'gy':iy, 'gz':iz, 'gt':it}
                         cell = self.createCellByGrid(grid)
                         i   += 1
         
@@ -252,10 +252,21 @@ class Space3M:
         return json
         
     #--------------------------------------------------------------------------
-    def getNumpy(self):
-        "Create and return numpy 4D array from active dictionary"
+    def getPlotData(self):
+        "Create and return numpy arrays for plotting from active dictionary"
         
-        journal.M( 'Space3M {} getNumpy'.format(self.name), 10)
+        toret = {'x':[], 'y':[], 'z':[], 't':[], 'phi':[], 'phase':[]}
+        
+        for cell in self.act.values():
+            
+            toret['x'].append( cell['pos']['x'] )
+            toret['y'].append( cell['pos']['y'] )
+            toret['z'].append( cell['pos']['z'] )
+            toret['t'].append( cell['pos']['t'] )
+        
+        journal.M( 'Space3M {} getPlotData'.format(self.name), 10)
+        
+        return toret
     
 #------------------------------------------------------------------------------
 print('Minkowski space class ver 0.10')

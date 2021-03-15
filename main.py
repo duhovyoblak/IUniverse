@@ -1,8 +1,9 @@
 #==============================================================================
 # :main file
 #------------------------------------------------------------------------------
-from siqo_lib import journal
-from space3M  import Space3M
+from siqo_lib    import journal
+from space3M     import Space3M
+from space3Mgui  import Space3Mgui
 
 #==============================================================================
 # package's constants
@@ -22,16 +23,21 @@ if __name__ =='__main__':
   
     journal.I( 'Main loop' )
     
+    # Vytvorim testovaci space3M
     st = Space3M('test')
-    st.createSpace( (100, 1, 1, 100), 2 )
+    st.createSpace( (50, 1, 1, 50), 2 )
     
     js = st.getJson()
+    
+    # Vytvorim GUI
+    gui = spaceGui = Space3Mgui(st)
+    
     
     i = 0
     for rec in js:
         print(rec)
         i += 1
-        if i > 20: break
+        if i > 10: break
     
     
     journal.O('Main end')

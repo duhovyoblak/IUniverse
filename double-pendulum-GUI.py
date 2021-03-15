@@ -11,23 +11,8 @@ import numpy as np
 
 from matplotlib.figure import Figure
 
-from matplotlib.backends.backend_tkagg import ( FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-def quiver_portrait(x_space, v_space, a_func, ax):
-    v_results = []
-    a_results = []
-
-    for v_val in v_space:
-        v_results.append([])
-        a_results.append([])
-        for x_val in x_space:
-            v_results[-1].append(v_val)
-            a_results[-1].append(a_func(x_val, v_val))
-
-    #fig = plt.figure(figsize=(25, 12))
-    #ax = fig.add_subplot(1, 1, 1)
-    q = ax.quiver(x_space, v_space, v_results, a_results)
-    return(q)
 
 
 theta_space = np.linspace(-7.0, 7.0, 40)
@@ -43,17 +28,19 @@ k = 0.0
 
 
 class MyGUI:
-    def __init__(self):
+    def __init__(self, title):
+        
+        # Create output window
         win = tk.Tk()
-        win.title("Double Pendulum Phase Portrait GUI")
-        win.geometry('1280x720')
+        win.title(title)
+        win.geometry('1280x1000')
         win.resizable(False,False)
         win.update()
         self.w = win.winfo_width()
         self.h = win.winfo_height()
         
         
-        #Create layout
+        # Create layout
 
         self.fig = Figure(figsize=(self.w*0.78/100, self.h*0.6/100), dpi=100)
         self.ax = self.fig.add_subplot(111)
@@ -87,6 +74,7 @@ class MyGUI:
         #Parameter map radiobuttons
         self.param1text = tk.Label(win, text="Select dynamic variables")
         self.param1text.place(x=self.w * 0.05, y=self.h * 0.62)
+        
         self.param_map_buttons = []
         self.param_map_var = tk.IntVar()
         self.param_map_text = [("theta_1 - omega_1", 0), ("theta_1 - theta_2", 1), ("theta_1 - omega_2", 2), ("theta_2 - omega_1", 3), ("omega_1 - omega_2", 4), ("theta_2 - omega_2", 5)]
@@ -105,18 +93,23 @@ class MyGUI:
         self.l_1 = 1.0
         self.l_2 = 1.0
         self.g = 9.8
+        
         self.m_1_slider = tk.Scale(win, from_=0.1, to=10.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.4, command=self.refreshParam, label="m_1")
         self.m_1_slider.place(x=self.w * 0.5, y=self.h * 0.62)
         self.m_1_slider.set(1.0)
+
         self.m_2_slider = tk.Scale(win, from_=0.1, to=10.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.4, command=self.refreshParam, label="m_2")
         self.m_2_slider.place(x=self.w * 0.5, y=self.h * 0.69)
         self.m_2_slider.set(1.0)
+
         self.l_1_slider = tk.Scale(win, from_=0.1, to=10.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.4, command=self.refreshParam, label="l_1")
         self.l_1_slider.place(x=self.w * 0.5, y=self.h * 0.76)
         self.l_1_slider.set(1.0)
+
         self.l_2_slider = tk.Scale(win, from_=0.1, to=10.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.4, command=self.refreshParam, label="l_2")
         self.l_2_slider.place(x=self.w * 0.5, y=self.h * 0.83)
         self.l_2_slider.set(1.0)
+
         self.g_slider = tk.Scale(win, from_=0.0, to=20.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.4, command=self.refreshParam, label="g")
         self.g_slider.place(x=self.w * 0.5, y=self.h * 0.9)
         self.g_slider.set(9.8)
@@ -145,16 +138,11 @@ class MyGUI:
             x_results.append([])
             y_results.append([])
             for x_val in x_space:
-                #self.theta_2 = x_val
-                #self.omega_2 = v_val
                 x_res, y_res = self.get_dynamic_res(x_val, y_val)
-                
                 x_results[-1].append(x_res)
                 y_results[-1].append(y_res)
                 
-                #fig = plt.figure(figsize=(25, 12))
-                #ax = fig.add_subplot(1, 1, 1)
-        q = self.ax.quiver(x_space, y_space, x_results, y_results)
+        self.ax.quiver(x_space, y_space, x_results, y_results)
         self.fig.tight_layout()
         self.canvas.draw()
         return 0,5
@@ -167,7 +155,6 @@ class MyGUI:
         self.l_2 = self.l_2_slider.get()
         self.g   = self.g_slider.get()
         self.phase_portrait(self.param1.get(), self.param2.get())
-        #print(self.theta_1)
     
     def on_click(self, event):
         if event.inaxes is not None:
@@ -237,41 +224,27 @@ class MyGUI:
     
     def get_dynamic_res(self, val_1, val_2):
         if self.param_map == 0:
-            #self.theta_1 = self.val_1
-            #self.omega_1 = self.val_2
             x_res = val_2
             y_res = self.get_epsilon_1(val_1, val_2, self.theta_2, self.omega_2)
         if self.param_map == 1:
-            #self.theta_1 = self.val_1
-            #self.theta_2 = self.val_2
             x_res = self.omega_1
             y_res = self.omega_2
         if self.param_map == 2:
-            #self.theta_1 = self.val_1
-            #self.omega_2 = self.val_2
             x_res = self.omega_1
             y_res = self.get_epsilon_2(val_1, self.omega_1, self.theta_2, val_2)
         if self.param_map == 3:
-            #self.theta_2 = self.val_1
-            #self.omega_1 = self.val_2
             x_res = self.omega_2
             y_res = self.get_epsilon_1(self.theta_1, val_2, val_1, self.omega_2)
         if self.param_map == 4:
-            #self.omega_1 = self.val_1
-            #self.omega_2 = self.val_2
             x_res = self.get_epsilon_1(self.theta_1, val_1, self.theta_2, val_2)
             y_res = self.get_epsilon_2(self.theta_1, val_1, self.theta_2, val_2)
         if self.param_map == 5:
-            #self.theta_2 = self.val_1
-            #self.omega_2 = self.val_2
             x_res = val_2
             y_res = self.get_epsilon_2(self.theta_1, self.omega_1, val_1, val_2)
         return(x_res, y_res)
     
     #-------------- PHYSICS METHODS -----------------------
     
-    #def double_pend_f(self, theta_2, omega_2):
-    #    
     
     def get_epsilon_1(self, my_theta_1, my_omega_1, my_theta_2, my_omega_2):
         numerator = self.m_2*self.l_1*np.sin(my_theta_1-my_theta_2)*(my_omega_2**2+my_omega_1**2*np.cos(my_theta_1-my_theta_2))+self.g*(self.m_1*np.sin(my_theta_1)+self.m_2*np.cos(my_theta_2)*np.sin(my_theta_1-my_theta_2))
@@ -286,4 +259,4 @@ class MyGUI:
 
 #------------------------------------------------------------------        
 if __name__ =='__main__':   
-    MyApp=MyGUI()
+    MyApp=MyGUI('titile')
