@@ -25,7 +25,7 @@ if __name__ =='__main__':
     
     # Vytvorim testovaci space3M
     st = Space3M('test')
-    st.createSpace( (50, 1, 1, 50), 2 )
+    st.createSpace( {'xMin':-20, 'xMax':20, 'yMin':0, 'yMax':1, 'zMin':0, 'zMax':1, 'tMin':-10, 'tMax':30 }, 2 )
     
     js = st.getJson()
     

@@ -10,13 +10,11 @@
 #
 #------------------------------------------------------------------------------
 from siqo_lib import journal
-from space3M  import Space3M
-
-import tkinter as tk
-import numpy   as np
 
 from matplotlib.figure                 import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+import tkinter as tk
 
 #==============================================================================
 # package's constants

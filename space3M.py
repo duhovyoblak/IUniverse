@@ -11,9 +11,7 @@
 #------------------------------------------------------------------------------
 from siqo_lib import journal
 
-from datetime import datetime
 from math     import sqrt, exp
-
 
 #==============================================================================
 # package's constants
@@ -27,7 +25,10 @@ _SQRT_2PI       = 2.5066282746310002
 _REV_SQRT_2PI   = 0.3989422804014327
 
 _E              = 2.718281828459045    # Euler number
-_C              = 0.299792458          # spped of light in [meter/nanosecond]
+_H              = 6.62607015e-25       # Planck quantum in [Joule*nanosecond]
+_H_RED          = _H / _2PI            # Reduced Planck quantum
+_C              = 0.299792458          # speed of light in [meter/nanosecond]
+_C2             = _C * _C              # speed of light square
 
 #==============================================================================
 # package's tools
@@ -121,7 +122,7 @@ class Space3M:
         dz = pb['z']-pa['z']
         dt = pb['t']-pa['t']
 
-        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz - _C*_C*dt*dt)}
+        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz - _C2*dt*dt)}
 
     #--------------------------------------------------------------------------
     def getMetGrid(self, ga, gb):
@@ -170,8 +171,8 @@ class Space3M:
             return toret
 
     #--------------------------------------------------------------------------
-    def createCellByGrid(self, grid, opt={}):
-        "Create cell in active dictionary for given grid position"
+    def addCellByGrid(self, grid, opt={}):
+        "Create and append cell into active dictionary for given grid position"
         
         pos  = self.getPos(grid)
         id   = self.getIdFromGrid(grid)
@@ -182,13 +183,13 @@ class Space3M:
         return cell
         
     #--------------------------------------------------------------------------
-    def createCellById(self, id, opt={}):
-        "Create cell in active dictionary for given ID"
+    def addCellById(self, id, opt={}):
+        "Create and append cell into active dictionary for given ID"
         
         rec  = self.getIdParts(id)
         grid = (rec['gx'], rec['gy'], rec['gz'], rec['gt'])
             
-        return self.createCellByGrid(grid, opt)
+        return self.addCellByGrid(grid, opt)
         
     #--------------------------------------------------------------------------
     def delCellById(self, id):
@@ -215,7 +216,7 @@ class Space3M:
     # Tools for Space initialisation
     #--------------------------------------------------------------------------
     def createSpace(self, shape, mpg ):
-        "Create empty grid with shape (ix, iy, iz, it) and set transformations for given meters_per_grid"
+        "Create grid {xMin, xMax, yMin, yMax, zMin, zMax, tMin, tMax} with given meters_per_grid"
         
         journal.I( 'Space3M {} createSpace...'.format(self.name), 10)
         self.clear()
@@ -225,13 +226,13 @@ class Space3M:
         
         # Create grid shape
         i = 0
-        for ix in range(shape[0]):
-            for iy in range(shape[1]):
-                for iz in range(shape[2]):
-                    for it in range(shape[3]):
+        for ix in range(shape['xMin'], shape['xMax']):
+            for iy in range(shape['yMin'], shape['yMax']):
+                for iz in range(shape['zMin'], shape['zMax']):
+                    for it in range(shape['tMin'], shape['tMax']):
                         
                         grid = {'gx':ix, 'gy':iy, 'gz':iz, 'gt':it}
-                        cell = self.createCellByGrid(grid)
+                        cell = self.addCellByGrid(grid)
                         i   += 1
         
         journal.O( 'Space3M {} created {} cells'.format(self.name, str(i)), 10)
