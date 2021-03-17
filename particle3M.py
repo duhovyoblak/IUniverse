@@ -21,23 +21,24 @@ from math     import sqrt, exp
 
 _ERR            = '_ERROR_'
 
-_PI             = 3.141592653589793    # Pi number
-_2PI            = 6.283185307179586
-_SQRT_2PI       = 2.5066282746310002
-_REV_SQRT_2PI   = 0.3989422804014327
-
 _E              = 2.718281828459045    # Euler number
-_H              = 6.62607015e-25       # Planck quantum in [Joule*nanosecond]
+_PI             = 3.141592653589793    # Pi number
+_2PI            = 2 * _PI              # 2 * Pi
+_SQRT_2PI       = sqrt(_2PI)
+_REV_SQRT_2PI   = 1 / _SQRT_2PI
+
+_H              = 6.62607015e-34       # Planck quantum in [Joule*second]
 _H_RED          = _H / _2PI            # Reduced Planck quantum
-_C              = 0.299792458          # speed of light in [meter/nanosecond]
+_C              = 299792458            # speed of light in [meter/second]
 _C2             = _C * _C              # speed of light square
-_EV             = 1.602176634e-19      # energy of 1 eV in [Joule]
+_EV_J           = 1.602176634e-19      # energy of 1 eV in [Joule]
+_EV_KG          = 1.782662e-36         # mass   of 1 eV/c2 in [kg]
 
 #==============================================================================
 # package's tools
 #------------------------------------------------------------------------------
 
-_M_E            = 0.510998950002e6     # rest mass of electron in [eV]
+_MR_E           = 0.510998950002e6     # rest mass of electron in [eV/c2]
 
 #==============================================================================
 # class Particle3M
@@ -47,14 +48,15 @@ class Particle3M:
     #==========================================================================
     # Constructor & utilities
     #--------------------------------------------------------------------------
-    def __init__(self, name, f, k):
-        "Call constructor of Particle3M and initialise its frequency and wave vector"
+    def __init__(self, name, m, v):
+        "Call constructor of Particle3M and initialise it"
 
         journal.I( 'Particle3M constructor for {}...'.format(name), 10 )
         
-        self.name = name   # unique name for particle in Your project
-        self.f    = f      # frequency in [GHz]
-        self.k    = k      # wavenumber {'kx', 'ky', 'kz'} in [meter]
+        self.name = name       # unique name for particle in Your project
+        self.type = 'common'   # type of particle, used in inherited classes
+        self.m    = m          # rest mass in [eV/c2]
+        self.v    = v          # speed vector {'vx', 'vy', 'vz'} in [meter/second]
         
         self.pos  = {'x':0, 'y':0, 'z':0, 't':0}     # Default position
 
@@ -75,35 +77,75 @@ class Particle3M:
         return self.name
 
     #--------------------------------------------------------------------------
+    def getType(self):
+        "Return particles's type"
+        
+        return self.type
+
+    #--------------------------------------------------------------------------
+    def setMassKg(self, m):
+        "Set rest mass in [eV/c2] for given mass in [kg]"
+        
+        self.m = m / _EV_KG
+
+    #==========================================================================
+    # Physical properties for particle in rest
+    #--------------------------------------------------------------------------
     def getPos(self):
         "Return particles's real position"
         
         return self.pos
 
     #--------------------------------------------------------------------------
-    def getEnergyT(self):
-        "Return total energy of particle in [Joule]"
+    def getMass(self):
+        "Return rest mass of particle in [eV/c2]"
         
-        return _H * self.f
+        return self.m
     
     #--------------------------------------------------------------------------
-    def getEnergyR(self):
-        "Return rest energy of particle in [Joule]"
+    def getEnergy(self):
+        "Return rest energy of particle in [Joule], E = (mr*1eV) * C2 "
         
-        return 0
+        return _EV_KG * self.m * _C2
     
+    #==========================================================================
+    # Physical properties for (relativistic) moving particle
     #--------------------------------------------------------------------------
-    def getMassT(self):
-        "Return total mass of particle in [eV]"
+    def getAbsV2(self):
+        "Return square of abs value of particle's speed, v2 = vx2 + vy2 + vz2"
         
-        return self.
-    
+        return self.v['vx']*self.v['vx'] +self.v['vy']*self.v['vy'] +self.v['vz']*self.v['vz']
+        
+    #--------------------------------------------------------------------------
+    def getAbsV(self):
+        "Return abs value of particle's speed, v = SQRT( abs(v2) )"
+        
+        return sqrt( self.getAbsV2() )
+        
     #--------------------------------------------------------------------------
     def getMassR(self):
-        "Return rest mass of particle in [eV]"
+        "Return relativistic mass of particle in [eV/c2], mr = m / sqrt(1 - (v2/c2)) "
         
-        return 
+        try:
+            return self.getMass() / sqrt( 1 - self.getAbsV2()/_C2 )
+        except:
+            journal.M( 'Particle3M {} getMassR is not defined'.format(self.name), 9)
+            return _ERR
+    
     #--------------------------------------------------------------------------
+    def getMomentum(self):
+        "Return momentum vector, p = mr * (vx, vy, vz)"
+        
+        mr = self.getMassR()
+        
+        return {'px':mr*self.v['vx'], 'py':mr*self.v['vy'], 'pz':mr*self.v['vz']}
+        
+    #--------------------------------------------------------------------------
+    def getEnergyR(self):
+        "Return total energy of particle in [Joule], E = (mr*1eV) * C2 "
+        
+        return _EV_KG * self.getMassR * _C2
+    
     #--------------------------------------------------------------------------
     #==========================================================================
     # Tools for Space 
@@ -132,11 +174,21 @@ class Particle3M:
     def getJson(self):
         "Create and return Json record"
         
-        json = {'name':self.name, 'pos':self.pos}
+        json = {'name':self.name, 'type':self.type, 'm':self.m, 'v':self.v, ' pos':self.pos}
         
         journal.M( 'Particle3M {} getJson created'.format(self.name), 10)
         
         return json
+        
+    #--------------------------------------------------------------------------
+    def print(self):
+        "Return list of printable strings with particle's properties"
+        
+        toret = []
+        
+        toret.append( "Particle '{}' is type '{}', with rest mass {} eV/c2".format(self.name, self.type, self.m) )
+        
+        return toret
         
 #------------------------------------------------------------------------------
 print('Particle class ver 0.10')
