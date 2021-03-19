@@ -48,15 +48,16 @@ class Particle3M:
     #==========================================================================
     # Constructor & utilities
     #--------------------------------------------------------------------------
-    def __init__(self, name, m, v):
+    def __init__(self, name, massLess, m, v):
         "Call constructor of Particle3M and initialise it"
 
         journal.I( 'Particle3M constructor for {}...'.format(name), 10 )
         
-        self.name = name       # unique name for particle in Your project
-        self.type = 'common'   # type of particle, used in inherited classes
-        self.m    = m          # rest mass in [eV/c2]
-        self.v    = v          # speed vector {'vx', 'vy', 'vz'} in [meter/second]
+        self.name     = name      # unique name for particle in Your project
+        self.type     = 'common'  # type of particle, used in inherited classes
+        self.massLess = massLess  # is massless particle ?
+        self.m        = m         # rest mass or energy for massless particle in [eV/c2]
+        self.v        = v         # wave vector {'vx', 'vy', 'vz'} in [meter/second]
         
         self.pos  = {'x':0, 'y':0, 'z':0, 't':0}     # Default position
 
@@ -83,13 +84,33 @@ class Particle3M:
         return self.type
 
     #--------------------------------------------------------------------------
+    def getMassLess(self):
+        "Return if particles is massless"
+        
+        return self.massLess
+
+    #--------------------------------------------------------------------------
     def setMassKg(self, m):
         "Set rest mass in [eV/c2] for given mass in [kg]"
         
         self.m = m / _EV_KG
 
+    #--------------------------------------------------------------------------
+    def setLambda(self, l):
+        "Set rest mass to ZERO and  in [m] for given lambda in [m]"
+        
+        self.m = m / _EV_KG
+
+    #--------------------------------------------------------------------------
+    def setPercLightSpeed(self, p):
+        "Set velocity in [meter/second] for given ratio of speed of light in [%]"
+        
+        self.v['vx'] = p['vx'] / 100 * _C
+        self.v['vy'] = p['vy'] / 100 * _C
+        self.v['vz'] = p['vz'] / 100 * _C
+
     #==========================================================================
-    # Physical properties for particle in rest
+    # Physical properties for particle in rest or massless particle
     #--------------------------------------------------------------------------
     def getPos(self):
         "Return particles's real position"
@@ -98,13 +119,13 @@ class Particle3M:
 
     #--------------------------------------------------------------------------
     def getMass(self):
-        "Return rest mass of particle in [eV/c2]"
+        "Return rest mass or energy for massless particle in [eV/c2]"
         
         return self.m
     
     #--------------------------------------------------------------------------
     def getEnergy(self):
-        "Return rest energy of particle in [Joule], E = (mr*1eV) * C2 "
+        "Return energy of particle in [Joule], E = (mr*1eV) * C2 "
         
         return _EV_KG * self.m * _C2
     
@@ -114,39 +135,71 @@ class Particle3M:
     def getAbsV2(self):
         "Return square of abs value of particle's speed, v2 = vx2 + vy2 + vz2"
         
-        return self.v['vx']*self.v['vx'] +self.v['vy']*self.v['vy'] +self.v['vz']*self.v['vz']
+        if self.massLess : return _C2
+        else :
+            return self.v['vx']*self.v['vx'] +self.v['vy']*self.v['vy'] +self.v['vz']*self.v['vz']
         
     #--------------------------------------------------------------------------
     def getAbsV(self):
         "Return abs value of particle's speed, v = SQRT( abs(v2) )"
         
-        return sqrt( self.getAbsV2() )
+        if self.massLess : return _C
+        else             : return sqrt( self.getAbsV2() )
         
     #--------------------------------------------------------------------------
     def getMassR(self):
         "Return relativistic mass of particle in [eV/c2], mr = m / sqrt(1 - (v2/c2)) "
         
         try:
-            return self.getMass() / sqrt( 1 - self.getAbsV2()/_C2 )
+            if self.massLess : return self.getMass()
+            else             : return self.getMass() / sqrt( 1 - self.getAbsV2()/_C2 )
         except:
             journal.M( 'Particle3M {} getMassR is not defined'.format(self.name), 9)
             return _ERR
     
     #--------------------------------------------------------------------------
-    def getMomentum(self):
-        "Return momentum vector, p = mr * (vx, vy, vz)"
+    def getAbsMoment(self):
+        "Return momentum vector, p = E/c for masseless or p = mr * vAbs"
         
-        mr = self.getMassR()
-        
-        return {'px':mr*self.v['vx'], 'py':mr*self.v['vy'], 'pz':mr*self.v['vz']}
+        if self.massLess: return self.getEnergy() / _C
+        else            : 
+            mr = self.getMassR()
+            return mr*mr * self.getAbsV()
         
     #--------------------------------------------------------------------------
     def getEnergyR(self):
         "Return total energy of particle in [Joule], E = (mr*1eV) * C2 "
         
-        return _EV_KG * self.getMassR * _C2
+        return _EV_KG * self.getMassR() * _C2
+    
+    #==========================================================================
+    # Physical properties in wave format
+    #--------------------------------------------------------------------------
+    def getFreq(self):
+        "Return frequency in [Hz], f = Etot / h "
+        
+        return self.getEnergyR() / _H
+        
+    #--------------------------------------------------------------------------
+    def getOmega(self):
+        "Return frequency in [rad/s], om = 2Pi * f"
+        
+        return self.getFreq() * _2PI
+        
+    #--------------------------------------------------------------------------
+    def getLambda(self):
+        "Return wavelength in [m], la = c/f"
+        
+        return _C / self.getFreq()
     
     #--------------------------------------------------------------------------
+    def getWaveNum(self):
+        "Return wave  number in [2Pi/m], k = 2Pi / lambda"
+        
+        return _2PI / self.getLambda()
+    
+    #--------------------------------------------------------------------------
+    
     #==========================================================================
     # Tools for Space 
     #--------------------------------------------------------------------------
@@ -186,7 +239,13 @@ class Particle3M:
         
         toret = []
         
-        toret.append( "Particle '{}' is type '{}', with rest mass {} eV/c2".format(self.name, self.type, self.m) )
+        toret.append( "Particle '{}' is type '{}'".format(self.name, self.type) )
+        toret.append( "rest  mass {:e} [eV/c2]   rest  Energy {:e}    [J]".format(self.getMass(),   self.getEnergy() ) )
+        toret.append( "total mass {:e} [eV/c2]   total Energy {:e}    [J]".format(self.getMassR(),  self.getEnergyR()) )
+        toret.append( "speed      {:e} [m/s]     or {:%} of light's speed".format(self.getAbsV(),   self.getAbsV()/_C) )
+        toret.append( "momentum   {:e} [kg*m/s]                          ".format(self.getAbsMoment()) )
+        toret.append( "frequency  {:e} [Hz]      omega       {:e} [2Pi/s]".format(self.getFreq(),   self.getOmega()  ) )
+        toret.append( "wavelength {:e} [m]       wave number {:e} [2Pi/m]".format(self.getLambda(), self.getWaveNum()) )
         
         return toret
         
