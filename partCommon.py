@@ -41,33 +41,30 @@ _EV_KG          = 1.782662e-36         # mass   of 1 eV/c2 in [kg]
 _MR_E           = 0.510998950002e6     # rest mass of electron in [eV/c2]
 
 #==============================================================================
-# class Particle3M
+# class PartCommon
 #------------------------------------------------------------------------------
-class Particle3M:
+class PartCommon:
 
     #==========================================================================
     # Constructor & utilities
     #--------------------------------------------------------------------------
-    def __init__(self, name, massLess, m, v):
-        "Call constructor of Particle3M and initialise it"
+    def __init__(self, name, pos, eV):
+        "Call constructor of PartCommon and initialise it"
 
-        journal.I( 'Particle3M constructor for {}...'.format(name), 10 )
+        journal.I( 'PartCommon constructor for {}...'.format(name), 10 )
         
         self.name     = name      # unique name for particle in Your project
         self.type     = 'common'  # type of particle, used in inherited classes
-        self.massLess = massLess  # is massless particle ?
-        self.m        = m         # rest mass or energy for massless particle in [eV/c2]
-        self.v        = v         # wave vector {'vx', 'vy', 'vz'} in [meter/second]
-        
-        self.pos  = {'x':0, 'y':0, 'z':0, 't':0}     # Default position
+        self.pos      = pos       # position of probability density amplitude origin
+        self.eV       = eV        # energy of article in [eV]
 
-        journal.O( 'Particle3M {} created'.format(self.name), 10 )
+        journal.O( 'PartCommon {} created with {:e} eV'.format(self.name, self.eV), 10 )
 
     #--------------------------------------------------------------------------
     def clear(self):
         "Clear all data content and set default transformation parameters"
 
-        journal.M( 'Particle3M {} ALL cleared'.format(self.name), 10)
+        journal.M( 'PartCommon {} ALL cleared'.format(self.name), 10)
         
     #==========================================================================
     # Tools for particle's selecting & editing
@@ -84,111 +81,60 @@ class Particle3M:
         return self.type
 
     #--------------------------------------------------------------------------
-    def getMassLess(self):
-        "Return if particles is massless"
+    def setEV(self, eV):
+        "Set total energy in [eV]"
         
-        return self.massLess
+        self.eV = eV
 
     #--------------------------------------------------------------------------
-    def setMassKg(self, m):
-        "Set rest mass in [eV/c2] for given mass in [kg]"
+    def setLambda(self, lam):
+        "Set total energy in [eV] for given lambda in [m], E = h * c / lambda * coeff"
         
-        self.m = m / _EV_KG
-
-    #--------------------------------------------------------------------------
-    def setLambda(self, l):
-        "Set rest mass to ZERO and  in [m] for given lambda in [m]"
-        
-        self.m = m / _EV_KG
-
-    #--------------------------------------------------------------------------
-    def setPercLightSpeed(self, p):
-        "Set velocity in [meter/second] for given ratio of speed of light in [%]"
-        
-        self.v['vx'] = p['vx'] / 100 * _C
-        self.v['vy'] = p['vy'] / 100 * _C
-        self.v['vz'] = p['vz'] / 100 * _C
+        self.eV = _H * _C / lam / _EV_J
 
     #==========================================================================
-    # Physical properties for particle in rest or massless particle
+    # Physical properties of common particle
     #--------------------------------------------------------------------------
-    def getPos(self):
-        "Return particles's real position"
+    def getEV(self):
+        "Return total energy of particle in [eV]"
         
-        return self.pos
-
+        return self.eV
+    
+    #--------------------------------------------------------------------------
+    def getEJ(self):
+        "Return total energy of particle in [J], E = coeff * eV"
+        
+        return _EV_J * self.eV
+    
     #--------------------------------------------------------------------------
     def getMass(self):
-        "Return rest mass or energy for massless particle in [eV/c2]"
+        "Return total mass of particle in [kg], m = E/c2"
         
-        return self.m
-    
-    #--------------------------------------------------------------------------
-    def getEnergy(self):
-        "Return energy of particle in [Joule], E = (mr*1eV) * C2 "
-        
-        return _EV_KG * self.m * _C2
-    
-    #==========================================================================
-    # Physical properties for (relativistic) moving particle
-    #--------------------------------------------------------------------------
-    def getAbsV2(self):
-        "Return square of abs value of particle's speed, v2 = vx2 + vy2 + vz2"
-        
-        if self.massLess : return _C2
-        else :
-            return self.v['vx']*self.v['vx'] +self.v['vy']*self.v['vy'] +self.v['vz']*self.v['vz']
-        
-    #--------------------------------------------------------------------------
-    def getAbsV(self):
-        "Return abs value of particle's speed, v = SQRT( abs(v2) )"
-        
-        if self.massLess : return _C
-        else             : return sqrt( self.getAbsV2() )
-        
-    #--------------------------------------------------------------------------
-    def getMassR(self):
-        "Return relativistic mass of particle in [eV/c2], mr = m / sqrt(1 - (v2/c2)) "
-        
-        try:
-            if self.massLess : return self.getMass()
-            else             : return self.getMass() / sqrt( 1 - self.getAbsV2()/_C2 )
-        except:
-            journal.M( 'Particle3M {} getMassR is not defined'.format(self.name), 9)
-            return _ERR
+        return self.getEJ() / _C2
     
     #--------------------------------------------------------------------------
     def getAbsMoment(self):
-        "Return momentum vector, p = E/c for masseless or p = mr * vAbs"
+        "Return absolute value of momentum, p = E/c in [kg*m/s]"
         
-        if self.massLess: return self.getEnergy() / _C
-        else            : 
-            mr = self.getMassR()
-            return mr*mr * self.getAbsV()
+        return self.getEJ() / _C
         
-    #--------------------------------------------------------------------------
-    def getEnergyR(self):
-        "Return total energy of particle in [Joule], E = (mr*1eV) * C2 "
-        
-        return _EV_KG * self.getMassR() * _C2
-    
     #==========================================================================
     # Physical properties in wave format
     #--------------------------------------------------------------------------
     def getFreq(self):
-        "Return frequency in [Hz], f = Etot / h "
+        "Return frequency in [Hz], f = E / h "
         
-        return self.getEnergyR() / _H
+        return self.getEJ() / _H
         
     #--------------------------------------------------------------------------
     def getOmega(self):
-        "Return frequency in [rad/s], om = 2Pi * f"
+        "Return frequency in [rad/s], omega = 2Pi * f"
         
-        return self.getFreq() * _2PI
+        return _2PI * self.getFreq()
         
     #--------------------------------------------------------------------------
     def getLambda(self):
-        "Return wavelength in [m], la = c/f"
+        "Return wavelength in [m], lambda = c/f"
         
         return _C / self.getFreq()
     
@@ -206,7 +152,7 @@ class Particle3M:
     def toSpace(self, space, pos='nil'):
         "Write particle to Minkowski space"
         
-        journal.I( 'Particle3M {} toSpace...'.format(self.name), 10)
+        journal.I( 'PartCommon {} toSpace...'.format(self.name), 10)
         
         if pos!='nil': self.pos = pos
         
@@ -219,38 +165,36 @@ class Particle3M:
             
 
         
-        journal.O( 'Particle3M {} toSpace done'.format(self.name), 10)
+        journal.O( 'PartCommon {} toSpace done'.format(self.name), 10)
 
     #==========================================================================
     # Tools for data extraction & persistency
     #--------------------------------------------------------------------------
     def getJson(self):
-        "Create and return Json record"
+        "Create and return Json record for particle"
         
-        json = {'name':self.name, 'type':self.type, 'm':self.m, 'v':self.v, ' pos':self.pos}
+        json = {'name':self.name, 'type':self.type, 'eV':self.eV}
         
-        journal.M( 'Particle3M {} getJson created'.format(self.name), 10)
+        journal.M( 'PartCommon {} getJson created'.format(self.name), 10)
         
         return json
         
     #--------------------------------------------------------------------------
     def print(self):
-        "Return list of printable strings with particle's properties"
+        "Print particle's properties"
         
-        toret = []
-        
-        toret.append( "Particle '{}' is type '{}'".format(self.name, self.type) )
-        toret.append( "rest  mass {:e} [eV/c2]   rest  Energy {:e}    [J]".format(self.getMass(),   self.getEnergy() ) )
-        toret.append( "total mass {:e} [eV/c2]   total Energy {:e}    [J]".format(self.getMassR(),  self.getEnergyR()) )
-        toret.append( "speed      {:e} [m/s]     or {:%} of light's speed".format(self.getAbsV(),   self.getAbsV()/_C) )
-        toret.append( "momentum   {:e} [kg*m/s]                          ".format(self.getAbsMoment()) )
-        toret.append( "frequency  {:e} [Hz]      omega       {:e} [2Pi/s]".format(self.getFreq(),   self.getOmega()  ) )
-        toret.append( "wavelength {:e} [m]       wave number {:e} [2Pi/m]".format(self.getLambda(), self.getWaveNum()) )
-        
-        return toret
+        print( "Particle '{}' is of type '{}'".format(self.name, self.type) )
+        print( "Position x={:e}, y={:e}, z={:e}, t={:e}".format(self.pos['x'], self.pos['y'], self.pos['z'], self.pos['t']))
+        print( "-----------------------------------------------------------------------" )
+        print( "Total Energy {:e} [eV]        total Energy {:e}     [J]".format(self.getEV(),        self.getEJ() ) )
+        print( "Total Mass   {:e} [kg]                                 ".format(self.getMass() ) )
+        print( "Abs Momentum {:e} [kg*m/s]                             ".format(self.getAbsMoment()) )
+        print( "frequency    {:e} [Hz]        omega        {:e} [2Pi/s]".format(self.getFreq(),      self.getOmega()  ) )
+        print( "wavelength   {:e} [m]         wave number  {:e} [2Pi/m]".format(self.getLambda(),    self.getWaveNum()) )
+        print( "=======================================================================" )
         
 #------------------------------------------------------------------------------
-print('Particle class ver 0.10')
+print('PartCommon class ver 0.20')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

@@ -48,14 +48,16 @@ class Space3M:
 
         journal.I( 'Space3M constructor for {}...'.format(name), 10 )
         
-        self.name = name              # unique name for Minkowski space in Your project
-        self.mpg  = 1                 # meters       per 1 grid distance
-        self.spg  = self.mpg / _C     # microseconds per 1 grid distance
+        self.name  = name                 # unique name for Minkowski space in Your project
+        self.mpg   = 1                    # meters       per 1 grid distance
+        self.spg   = self.mpg / _C        # microseconds per 1 grid distance
 
-        self.base = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
-        self.blur = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
+        self.base  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
+        self.blur  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
 
-        self.act  = self.setAct('base')
+        self.act   = self.setAct('base')  # Active dictionary = all methods use this data
+        
+        self.parts = []                   # list of particles in space
 
         journal.O( 'Space3M {} created'.format(self.name), 10 )
 
@@ -67,6 +69,8 @@ class Space3M:
         self.blur.clear()
 
         self.setAct('base')
+        
+        self.parts.clear()
 
         self.mpg  = 1                 # meters      per 1 grid distance
         self.spg  = self.mpg / _C     # nanoseconds per 1 grid distance
@@ -209,8 +213,26 @@ class Space3M:
         
         return toret
 
+    #==========================================================================
+    # Tools for editing of particles
     #--------------------------------------------------------------------------
+    def addPart(self, part):
+        "Add already existing particle into space"
+        
+        self.parts.append(part)
+        
     #--------------------------------------------------------------------------
+    def print(self):
+        "Print list of particles with theirs properties"
+        
+        i = 0
+        for part in self.parts:
+            
+            print()
+            print("Particle[{}]".format(i))
+            part.print()
+            i += 1
+            
     #--------------------------------------------------------------------------
     #==========================================================================
     # Tools for Space initialisation

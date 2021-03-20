@@ -4,6 +4,7 @@
 from siqo_lib    import journal
 from space3M     import Space3M
 from space3Mgui  import Space3Mgui
+from partCommon  import PartCommon
 
 #==============================================================================
 # package's constants
@@ -27,17 +28,15 @@ if __name__ =='__main__':
     st = Space3M('test')
     st.createSpace( {'xMin':-20, 'xMax':20, 'yMin':0, 'yMax':1, 'zMin':0, 'zMax':1, 'tMin':-10, 'tMax':30 }, 2 )
     
+    p = PartCommon( 'test', {'x':0, 'y':0, 'z':0, 't':0},  510998.950 )
+    st.addPart(p)
+    st.print()
+    
     js = st.getJson()
     
     # Vytvorim GUI
-    gui = spaceGui = Space3Mgui(st)
+#    gui = spaceGui = Space3Mgui(st)
     
-    
-    i = 0
-    for rec in js:
-        print(rec)
-        i += 1
-        if i > 10: break
     
     
     journal.O('Main end')
