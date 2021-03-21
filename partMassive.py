@@ -84,6 +84,12 @@ class PartMassive:
         return self.type
 
     #--------------------------------------------------------------------------
+    def getMass(self):
+        "Return total mass of particle in [kg], m = E/c2"
+        
+        return self.getEJ() / _C2
+    
+    #--------------------------------------------------------------------------
     def getMassLess(self):
         "Return if particles is massless"
         

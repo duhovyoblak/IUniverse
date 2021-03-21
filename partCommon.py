@@ -95,6 +95,12 @@ class PartCommon:
     #==========================================================================
     # Physical properties of common particle
     #--------------------------------------------------------------------------
+    def getPos(self):
+        "Return position of probability density amplitude origin"
+        
+        return self.pos
+    
+    #--------------------------------------------------------------------------
     def getEV(self):
         "Return total energy of particle in [eV]"
         
@@ -140,12 +146,23 @@ class PartCommon:
     
     #--------------------------------------------------------------------------
     def getWaveNum(self):
-        "Return wave  number in [2Pi/m], k = 2Pi / lambda"
+        "Return wave number in [2Pi/m], k = 2Pi / lambda"
         
         return _2PI / self.getLambda()
     
     #--------------------------------------------------------------------------
+    def getWaveVec(self):
+        "Return wave vector in [2Pi/m], kx = ky = kz = k"
+        
+        k = self.getWaveNum()
+        
+        return {'x':k, 'y':k, 'z':k}
     
+    #==========================================================================
+    # Information wave properties
+    #--------------------------------------------------------------------------
+        
+        
     #==========================================================================
     # Tools for Space 
     #--------------------------------------------------------------------------

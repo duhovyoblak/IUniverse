@@ -104,12 +104,12 @@ class Space3Mgui:
         print(self.g)
         
         self.ax.clear()
-        self.ax.set_xlabel('$x$ [meter]')
-        self.ax.set_ylabel('$t$ [nanosecond]')
+        self.ax.set_xlabel('$x$ [meter]' )
+        self.ax.set_ylabel('$t$ [second]')
         
         data = self.space3M.getPlotData()
         
-        self.ax.quiver(data['x'], data['t'], data['x'], data['t'])
+        self.ax.quiver(data['x'], data['t'], data['phs_x'], data['phs_y'])
 
                 
         self.fig.tight_layout()
@@ -129,7 +129,13 @@ class Space3Mgui:
         "Print information about mouse-given position"
         
         if event.inaxes is not None:
-            print(event.xdata, event.ydata)
+            
+            x = event.xdata
+            y = event.ydata
+            id = self.space3M.getIdFromPos({'x':x, 'y':0, 'z':0, 't':y})
+            
+            self.space3M.printCell(id)
+            
         else:
             print('Clicked ouside axes bounds but inside plot window')
     

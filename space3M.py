@@ -11,7 +11,7 @@
 #------------------------------------------------------------------------------
 from siqo_lib import journal
 
-from math     import sqrt, exp
+from math     import sqrt, exp, sin, cos
 
 #==============================================================================
 # package's constants
@@ -25,14 +25,14 @@ _SQRT_2PI       = 2.5066282746310002
 _REV_SQRT_2PI   = 0.3989422804014327
 
 _E              = 2.718281828459045    # Euler number
-_H              = 6.62607015e-25       # Planck quantum in [Joule*nanosecond]
+_H              = 6.62607015e-34       # Planck quantum in [Joule*second]
 _H_RED          = _H / _2PI            # Reduced Planck quantum
-_C              = 0.299792458          # speed of light in [meter/nanosecond]
+_C              = 299792458            # speed of light in [meter/second]
 _C2             = _C * _C              # speed of light square
 
 #==============================================================================
 # package's tools
-#------------------------------------------------------------------------------
+#-------------------------- ----------------------------------------------------
 
 
 #==============================================================================
@@ -49,15 +49,19 @@ class Space3M:
         journal.I( 'Space3M constructor for {}...'.format(name), 10 )
         
         self.name  = name                 # unique name for Minkowski space in Your project
-        self.mpg   = 1                    # meters       per 1 grid distance
-        self.spg   = self.mpg / _C        # microseconds per 1 grid distance
+        
+        self.setZoom(10)
+        self.mpg   = 1                    # meters  per 1 grid distance
+        self.spg   = 1                    # seconds per 1 grid distance
+        
+        self.setZoom(10)                  # reset mpg and spg parameters
 
         self.base  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
         self.blur  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
 
         self.act   = self.setAct('base')  # Active dictionary = all methods use this data
         
-        self.parts = []                   # list of particles in space
+        self.parts = {}                   # {'part.name':part} all of particles in space
 
         journal.O( 'Space3M {} created'.format(self.name), 10 )
 
@@ -72,8 +76,8 @@ class Space3M:
         
         self.parts.clear()
 
-        self.mpg  = 1                 # meters      per 1 grid distance
-        self.spg  = self.mpg / _C     # nanoseconds per 1 grid distance
+        self.mpg  = 1                 # meters  per 1 grid distance
+        self.spg  = self.mpg / _C     # seconds per 1 grid distance
 
         journal.M( 'Space3M {} ALL cleared'.format(self.name), 10)
         
@@ -93,27 +97,38 @@ class Space3M:
         if self.act == self.base: return 'base'
         if self.act == self.blur: return 'blur'
 
+    #--------------------------------------------------------------------------
+    def setZoom(self, mpg, spg=0):
+        "Set meters per grid and seconds per grid parameters"
+
+        self.mpg = mpg
+        
+        if spg == 0 : self.spg = mpg / _C
+        else        : self.spg = spg
+
+        journal.M( 'Space3M {} setted {} meters_per_grid and {} seconds_per_grid'.format(self.name, self.mpg, self.spg), 10)
+        
     #==========================================================================
     # Tools for grid_to_real_position transformations, no data changed or referenced
     #--------------------------------------------------------------------------
     def getGrid(self, pos):
         "Return nearest grid position (indices for numpy arrays) for given real position"
 
-        gx = round(self.mpg * pos['x'])
-        gy = round(self.mpg * pos['y'])
-        gz = round(self.mpg * pos['z'])
-        gt = round(self.spg * pos['t'])
+        gx = int(round(pos['x'] / self.mpg))
+        gy = int(round(pos['y'] / self.mpg))
+        gz = int(round(pos['z'] / self.mpg))
+        gt = int(round(pos['t'] / self.spg))
 
-        return {'gx':gx, 'gy':gy, 'gz':gz, 'gt':gt}
+        return {'x':gx, 'y':gy, 'z':gz, 't':gt}
 
     #--------------------------------------------------------------------------
     def getPos(self, grid):
         "Return real position for given grid position (indices for numpy arrays)"
 
-        x = grid['gx'] / self.mpg
-        y = grid['gy'] / self.mpg
-        z = grid['gz'] / self.mpg
-        t = grid['gt'] / self.spg
+        x = grid['x'] * self.mpg
+        y = grid['y'] * self.mpg
+        z = grid['z'] * self.mpg
+        t = grid['t'] * self.spg
 
         return {'x':x, 'y':y, 'z':z, 't':t}
 
@@ -126,17 +141,25 @@ class Space3M:
         dz = pb['z']-pa['z']
         dt = pb['t']-pa['t']
 
-        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz - _C2*dt*dt)}
+        dl2 = dx*dx + dy*dy +dz*dz
+        dt2 = _C2*dt*dt
+        
+        re, im = 0, 0
+
+        if dl2 > dt2: re = sqrt( dl2 - dt2 )
+        else        : im = sqrt( dt2 - dl2 )
+
+        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 're':re, 'im':im }
 
     #--------------------------------------------------------------------------
     def getMetGrid(self, ga, gb):
         "Return metric between two grid positions in eucleidian grid distance"
 
-        dx = gb['gx']-ga['gx']
-        dy = gb['gy']-ga['gy']
-        dz = gb['gz']-ga['gz']
-        dt = gb['gt']-ga['gt']
-
+        dx = gb['x']-ga['x']
+        dy = gb['y']-ga['y']
+        dz = gb['z']-ga['z']
+        dt = gb['t']-ga['t']
+        
         return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz + dt*dt)}
 
     #==========================================================================
@@ -145,7 +168,7 @@ class Space3M:
     def getIdFromGrid(self, grid):
         "Create cell's ID from grid position"
         
-        return self.name+ '#' +str(grid['gx'])+'#'+str(grid['gy'])+'#'+str(grid['gz'])+'#'+str(grid['gt'])
+        return self.name+ '#' +str(grid['x'])+'#'+str(grid['y'])+'#'+str(grid['z'])+'#'+str(grid['t'])
 
     #--------------------------------------------------------------------------
     def getIdFromPos(self, pos):
@@ -155,8 +178,8 @@ class Space3M:
         return self.getIdFromGrid(grid)
 
     #--------------------------------------------------------------------------
-    def getIdParts(self, id):
-        "Return structured parts from cell's ID"
+    def getIdStruct(self, id):
+        "Return ID's structure"
         
         toret = { 'name':_ERR }
         
@@ -164,14 +187,14 @@ class Space3M:
             l = id.split('#')
             
             toret['name'] = l[0]
-            toret['gx'  ] = l[1]
-            toret['gy'  ] = l[2]
-            toret['gz'  ] = l[3]
-            toret['gt'  ] = l[4]
+            toret['x'   ] = l[1]
+            toret['y'   ] = l[2]
+            toret['z'   ] = l[3]
+            toret['t'   ] = l[4]
             return toret
             
         except:
-            journal( 'Space3M {} getIdParts ERROR id={}'.format(self.name, id), 0)
+            journal( 'Space3M {} getIdStruct ERROR id={}'.format(self.name, id), 0)
             return toret
 
     #--------------------------------------------------------------------------
@@ -190,8 +213,8 @@ class Space3M:
     def addCellById(self, id, opt={}):
         "Create and append cell into active dictionary for given ID"
         
-        rec  = self.getIdParts(id)
-        grid = (rec['gx'], rec['gy'], rec['gz'], rec['gt'])
+        rec  = self.getIdStruct(id)
+        grid = (rec['x'], rec['y'], rec['z'], rec['t'])
             
         return self.addCellByGrid(grid, opt)
         
@@ -219,32 +242,45 @@ class Space3M:
     def addPart(self, part):
         "Add already existing particle into space"
         
-        self.parts.append(part)
+        self.parts[part.getName()] = part
+        
+        journal.M( "Space3M {} added Particle '{}'".format(self.name, part.getName()), 10)
         
     #--------------------------------------------------------------------------
-    def print(self):
+    def printCell(self, id):
+        "Print cell for given ID with their properties"
+        
+        try: 
+            cell = self.act[id]
+            
+            print( id, cell['pos'], cell['val'], cell['opt'] )
+        
+        except KeyError:
+            journal.M( "Space3M {} can't print cell ID = {}. No such cell".format(self.name, id), 9)
+        
+    #--------------------------------------------------------------------------
+    def printParts(self):
         "Print list of particles with theirs properties"
         
-        i = 0
-        for part in self.parts:
+        i = 1
+        for part in self.parts.values():
             
             print()
-            print("Particle[{}]".format(i))
+            print("Particle {}".format(i))
             part.print()
             i += 1
             
     #--------------------------------------------------------------------------
     #==========================================================================
-    # Tools for Space initialisation
+    # Tools for Space initialisation & editing
     #--------------------------------------------------------------------------
-    def createSpace(self, shape, mpg ):
+    def createSpace(self, shape, mpg, spg=0 ):
         "Create grid {xMin, xMax, yMin, yMax, zMin, zMax, tMin, tMax} with given meters_per_grid"
         
         journal.I( 'Space3M {} createSpace...'.format(self.name), 10)
-        self.clear()
 
-        self.mpg  = mpg               # meters      per 1 grid distance
-        self.spg  = self.mpg / _C     # nanoseconds per 1 grid distance
+        self.clear()
+        self.setZoom(mpg, spg)
         
         # Create grid shape
         i = 0
@@ -253,11 +289,41 @@ class Space3M:
                 for iz in range(shape['zMin'], shape['zMax']):
                     for it in range(shape['tMin'], shape['tMax']):
                         
-                        grid = {'gx':ix, 'gy':iy, 'gz':iz, 'gt':it}
+                        grid = {'x':ix, 'y':iy, 'z':iz, 't':it}
                         cell = self.addCellByGrid(grid)
                         i   += 1
         
         journal.O( 'Space3M {} created {} cells'.format(self.name, str(i)), 10)
+
+    #--------------------------------------------------------------------------
+    def partToSpace(self, part ):
+        "Append phi for given particle in every id in the Space"
+        
+        om = part.getOmega()
+        kv = part.getWaveVec()
+        pp = part.getPos()
+        
+        for cell in self.act.values():
+            
+            dP  = self.getMetPos( pp, cell['pos'] )
+            phi = om*dP['dt'] - ( kv['x']*dP['dx'] + kv['y']*dP['dy'] + kv['z']*dP['dz'] )
+            
+            cell['val']['phi'] += phi
+            cell['val']['phs']  = cell['val']['phi'] % _2PI
+
+        journal.M( 'Space3M {} partToSpace for {}'.format(self.name, part.getName()), 10)
+
+    #--------------------------------------------------------------------------
+    def partsUp(self):
+        "Call partToSpace() for all praticles in the list"
+        
+        journal.I( 'Space3M {} partsUp...'.format(self.name), 10)
+
+        for part in self.parts.values():
+
+            self.partToSpace(part)
+            
+        journal.O( 'Space3M {} partsUp done'.format(self.name), 10)
 
     #==========================================================================
     # Tools for data extraction & persistency
@@ -278,21 +344,25 @@ class Space3M:
     def getPlotData(self):
         "Create and return numpy arrays for plotting from active dictionary"
         
-        toret = {'x':[], 'y':[], 'z':[], 't':[], 'phi':[], 'phase':[]}
+        toret = {'x':[], 'y':[], 'z':[], 't':[], 'phi':[], 'phs':[], 'phs_x':[], 'phs_y':[]}
         
         for cell in self.act.values():
             
-            toret['x'].append( cell['pos']['x'] )
-            toret['y'].append( cell['pos']['y'] )
-            toret['z'].append( cell['pos']['z'] )
-            toret['t'].append( cell['pos']['t'] )
+            toret['x'    ].append(     cell['pos']['x'  ]  )
+            toret['y'    ].append(     cell['pos']['y'  ]  )
+            toret['z'    ].append(     cell['pos']['z'  ]  )
+            toret['t'    ].append(     cell['pos']['t'  ]  )
+            toret['phi'  ].append(     cell['val']['phi']  )
+            toret['phs'  ].append(     cell['val']['phs']  )
+            toret['phs_x'].append( sin(cell['val']['phs']) )
+            toret['phs_y'].append( cos(cell['val']['phs']) )
         
         journal.M( 'Space3M {} getPlotData'.format(self.name), 10)
         
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.10')
+print('Minkowski space class ver 0.20')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

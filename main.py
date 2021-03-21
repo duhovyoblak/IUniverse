@@ -26,16 +26,18 @@ if __name__ =='__main__':
     
     # Vytvorim testovaci space3M
     st = Space3M('test')
-    st.createSpace( {'xMin':-20, 'xMax':20, 'yMin':0, 'yMax':1, 'zMin':0, 'zMax':1, 'tMin':-10, 'tMax':30 }, 2 )
+    st.createSpace( {'xMin':-20, 'xMax':20, 'yMin':0, 'yMax':1, 'zMin':0, 'zMax':1, 'tMin':-10, 'tMax':30 }, 0.2 )
     
     p = PartCommon( 'test', {'x':0, 'y':0, 'z':0, 't':0},  510998.950 )
+    p.setLambda(3)
+    
     st.addPart(p)
-    st.print()
+    st.partsUp()
     
     js = st.getJson()
     
     # Vytvorim GUI
-#    gui = spaceGui = Space3Mgui(st)
+    gui = spaceGui = Space3Mgui(st)
     
     
     
