@@ -40,6 +40,11 @@ class Space3Mgui:
         self.space3M = space
         self.title   = self.space3M.name
         
+        self.types   = {1:'Phi manifold', 2:'Phase map'}
+        self.actType = 1
+        
+        self.data = self.space3M.getPlotData()
+        
         #----------------------------------------------------------------------
         # Create output window
         win = tk.Tk()
@@ -54,7 +59,7 @@ class Space3Mgui:
         # Create layout
 
         self.fig = Figure(figsize=(self.w*0.9/100, self.h*0.8/100), dpi=100)
-        self.ax = self.fig.add_subplot(111)
+        self.ax = self.fig.add_subplot(1,1,1)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=win)  # A tk.DrawingArea.
         self.canvas.draw()
@@ -100,27 +105,52 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
     def show(self):
         "Show Minkovski space according to given parameters"
-
-        print(self.g)
+        
+        journal.I( 'Space3Mgui {} show {}'.format(self.title, self.types[self.actType]), 10 )
+        
         
         self.ax.clear()
-        self.ax.set_xlabel('$x$ [meter]' )
-        self.ax.set_ylabel('$t$ [second]')
         
-        data = self.space3M.getPlotData()
+        # Test aktivneho typu zobrazenia
+        if self.actType == 1:
+            
+            # Vykreslenie phi plochy
+            self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
+            self.ax.grid(True)
+            self.ax.set_xlabel('$x$ [meter]' )
+            self.ax.set_ylabel('$t$ [second]')
+            sctr = self.ax.scatter(x=self.data['x'], y=self.data['t'], c=self.data['phi'], cmap='RdYlGn')
+            
+        elif self.actType == 2:
+            
+            # Vykreslenie phi plochy
+ 
+            self.ax.set_title("Amplitude's phase in <0, 2Pi>", fontsize=14)
+            self.ax.grid(True)
+            self.ax.set_xlabel('$x$ [meter]' )
+            self.ax.set_ylabel('$t$ [second]')
+            self.ax.quiver(self.data['x'],     self.data['t'],
+                           self.data['phs_x'], self.data['phs_y'], 
+                           self.data['phi'], cmap='RdYlGn'        )
+#            plt.colorbar(sctr, ax=ax1, format='$%d')
         
-        self.ax.quiver(data['x'], data['t'], data['phs_x'], data['phs_y'])
-
-                
+        # Vykreslenie diagramu
         self.fig.tight_layout()
         self.canvas.draw()
+    
+        journal.O( 'Space3Mgui {} show done'.format(self.title), 10 )
+        
+    #--------------------------------------------------------------------------
+    def on_button(self):
+        "Resolve radio buttons selection for active type of figure"
+        
+        self.actType = self.param_map_var.get() # get integer value for selected button
+        self.show()
     
     #--------------------------------------------------------------------------
     def on_gSlider(self, new_val=1.0):
         "Resolve change of g-Slider"
 
-        print('new val', new_val)
-        
         self.g   = new_val  # same as self.g_slider.get()
         self.show()
     
@@ -138,13 +168,6 @@ class Space3Mgui:
             
         else:
             print('Clicked ouside axes bounds but inside plot window')
-    
-    #--------------------------------------------------------------------------
-    def on_button(self):
-        "Resolve radio buttons selection"
-        
-        i = self.param_map_var.get() # get integer value for selected button
-        print('button_cmd', i)
     
     #--------------------------------------------------------------------------
 

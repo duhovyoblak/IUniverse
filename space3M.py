@@ -133,7 +133,7 @@ class Space3M:
         return {'x':x, 'y':y, 'z':z, 't':t}
 
     #--------------------------------------------------------------------------
-    def getMetPos(self, pa, pb):
+    def getPosInt(self, pa, pb):
         "Return metric between two real positions in space-time interval"
 
         dx = pb['x']-pa['x']
@@ -152,7 +152,7 @@ class Space3M:
         return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 're':re, 'im':im }
 
     #--------------------------------------------------------------------------
-    def getMetGrid(self, ga, gb):
+    def getGridInt(self, ga, gb):
         "Return metric between two grid positions in eucleidian grid distance"
 
         dx = gb['x']-ga['x']
@@ -160,7 +160,7 @@ class Space3M:
         dz = gb['z']-ga['z']
         dt = gb['t']-ga['t']
         
-        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'met':sqrt(dx*dx + dy*dy +dz*dz + dt*dt)}
+        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'int':sqrt(dx*dx + dy*dy +dz*dz + dt*dt)}
 
     #==========================================================================
     # Tools for cell's selecting, creating & editing
@@ -297,7 +297,7 @@ class Space3M:
 
     #--------------------------------------------------------------------------
     def partToSpace(self, part ):
-        "Append phi for given particle in every id in the Space"
+        "Append phi for given particle for every ID in the Space"
         
         om = part.getOmega()
         kv = part.getWaveVec()
@@ -305,8 +305,8 @@ class Space3M:
         
         for cell in self.act.values():
             
-            dP  = self.getMetPos( pp, cell['pos'] )
-            phi = om*dP['dt'] - ( kv['x']*dP['dx'] + kv['y']*dP['dy'] + kv['z']*dP['dz'] )
+            dP  = self.getPosInt( pp, cell['pos'] )
+            phi = om*dP['dt'] - abs( kv['x']*dP['dx'] + kv['y']*dP['dy'] + kv['z']*dP['dz'] )
             
             cell['val']['phi'] += phi
             cell['val']['phs']  = cell['val']['phi'] % _2PI

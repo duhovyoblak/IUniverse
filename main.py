@@ -37,7 +37,7 @@ if __name__ =='__main__':
     js = st.getJson()
     
     # Vytvorim GUI
-    gui = spaceGui = Space3Mgui(st)
+    gui = Space3Mgui(st)
     
     
     
