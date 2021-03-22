@@ -134,7 +134,9 @@ class Space3M:
 
     #--------------------------------------------------------------------------
     def getPosInt(self, pa, pb):
-        "Return metric between two real positions in space-time interval"
+        "Return metric between two real positions (pb-pa) in space-time interval"
+
+        if pa==0: pa = {'x':0, 'y':0, 'z':0, 't':0}
 
         dx = pb['x']-pa['x']
         dy = pb['y']-pa['y']
@@ -203,7 +205,10 @@ class Space3M:
         
         pos  = self.getPos(grid)
         id   = self.getIdFromGrid(grid)
-        cell = {'pos':pos, 'val':{'phi':0, 'phs':0, 'amp':0}, 'opt':opt }
+        dP   = self.getPosInt(0, pos)
+        
+        cell = {'pos':pos, 
+                'val':{ 'ds':(dP['re']-dP['im']), 'phi':0, 'phs':0, 'amp':0}, 'opt':opt }
 
         self.act[id] = cell
         
@@ -344,25 +349,42 @@ class Space3M:
     def getPlotData(self):
         "Create and return numpy arrays for plotting from active dictionary"
         
-        toret = {'x':[], 'y':[], 'z':[], 't':[], 'phi':[], 'phs':[], 'phs_x':[], 'phs_y':[]}
+        # Metadata section
+        meta = { 'x'    :{'dim':'m'  , 'unit':''},
+                 'y'    :{'dim':'m'  , 'unit':''},
+                 'z'    :{'dim':'m'  , 'unit':''},
+                 't'    :{'dim':'s'  , 'unit':''},
+                 'ds'   :{'dim':'s'  , 'unit':''},
+                 'phi'  :{'dim':'rad', 'unit':''},
+                 'phs'  :{'dim':'rad', 'unit':''},
+                 'phs_x':{'dim':''   , 'unit':''},
+                 'phs_y':{'dim':''   , 'unit':''}  }
+        
+        # Data section
+        data = {'x':[], 'y':[], 'z':[], 't':[],'ds':[],
+                'phi':[], 'phs':[], 'phs_x':[], 'phs_y':[] }
+        
+        toret = { 'meta':meta, 'data':data }
         
         for cell in self.act.values():
             
-            toret['x'    ].append(     cell['pos']['x'  ]  )
-            toret['y'    ].append(     cell['pos']['y'  ]  )
-            toret['z'    ].append(     cell['pos']['z'  ]  )
-            toret['t'    ].append(     cell['pos']['t'  ]  )
-            toret['phi'  ].append(     cell['val']['phi']  )
-            toret['phs'  ].append(     cell['val']['phs']  )
-            toret['phs_x'].append( sin(cell['val']['phs']) )
-            toret['phs_y'].append( cos(cell['val']['phs']) )
+            toret['data']['x'    ].append(     cell['pos']['x'  ]  )
+            toret['data']['y'    ].append(     cell['pos']['y'  ]  )
+            toret['data']['z'    ].append(     cell['pos']['z'  ]  )
+            toret['data']['t'    ].append(     cell['pos']['t'  ]  )
+            
+            toret['data']['ds'   ].append(     cell['val']['ds' ]  )
+            toret['data']['phi'  ].append(     cell['val']['phi']  )
+            toret['data']['phs'  ].append(     cell['val']['phs']  )
+            toret['data']['phs_x'].append( sin(cell['val']['phs']) )
+            toret['data']['phs_y'].append( cos(cell['val']['phs']) )
         
         journal.M( 'Space3M {} getPlotData'.format(self.name), 10)
         
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.20')
+print('Minkowski space class ver 0.21')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

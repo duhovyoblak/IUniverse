@@ -45,6 +45,10 @@ class Space3Mgui:
         
         self.data = self.space3M.getPlotData()
         
+ #       for key, lst in self.data['data'].items(): print( "Data list '{}' has length {}".format(key, len(lst)) )
+        
+        self.reUnit()
+        
         #----------------------------------------------------------------------
         # Create output window
         win = tk.Tk()
@@ -97,11 +101,45 @@ class Space3Mgui:
         win.mainloop()       # Start listening for events
 
     #==========================================================================
-    # Tools for setting
+    # Tools for figure setting
     #--------------------------------------------------------------------------
+    def reUnit(self):
+        "Re-scale all data vectors for better understability"
+        
+        journal.I( 'Space3Mgui {} reUnit...'.format(self.title), 10 )
+        for key, lst in self.data['data'].items():
+            
+            pL = list(lst)  # Urobim si kopiu listu na pokusy :-)
+            pL.sort()
+                
+            # Najdem vhodny koeficient
+            if pL[-1]-pL[0] > 1e-12 : c = ('p', 1e+12)
+            if pL[-1]-pL[0] > 1e-09 : c = ('n', 1e+09)
+            if pL[-1]-pL[0] > 1e-06 : c = ('µ', 1e+06)
+            if pL[-1]-pL[0] > 1e-03 : c = ('m', 1e+03)
+            if pL[-1]-pL[0] > 1e+00 : c = ('',  1e+00)
+            if pL[-1]-pL[0] > 1e+03 : c = ('K', 1e-03)
+            if pL[-1]-pL[0] > 1e+06 : c = ('M', 1e-06)
+            if pL[-1]-pL[0] > 1e+09 : c = ('G', 1e-09)
+            if pL[-1]-pL[0] > 1e+12 : c = ('T', 1e-12)
+                
+            # Preskalujem udaje
+            for i in range(len(lst)): lst[i] = lst[i] * c[1]
+            self.data['meta'][key]['unit'] = c[0]
+            
+            journal.M( 'Space3Mgui {} Data list {} was re-scaled by {:e} with preposition {}'.format(self.title, key, c[1], c[0]), 10 )
+                
+        journal.O( 'Space3Mgui {} reUnit done'.format(self.title), 10 )
     
+    #--------------------------------------------------------------------------
+    def getDataLabel(self, key):
+        "Return data label for given data's key"
+        
+        return "${}$ [{}{}]".format(key, self.data['meta'][key]['unit'], 
+                                         self.data['meta'][key]['dim' ])
+        
     #==========================================================================
-    # Private methods
+    # GUI methods
     #--------------------------------------------------------------------------
     def show(self):
         "Show Minkovski space according to given parameters"
@@ -117,9 +155,10 @@ class Space3Mgui:
             # Vykreslenie phi plochy
             self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
             self.ax.grid(True)
-            self.ax.set_xlabel('$x$ [meter]' )
-            self.ax.set_ylabel('$t$ [second]')
-            sctr = self.ax.scatter(x=self.data['x'], y=self.data['t'], c=self.data['phi'], cmap='RdYlGn')
+            self.ax.set_xlabel( self.getDataLabel('x') )
+            self.ax.set_ylabel( self.getDataLabel('t') )
+            sctr = self.ax.scatter(x=self.data['data']['x'], y=self.data['data']['t'],
+                                   c=self.data['data']['phi'], cmap='RdYlGn')
             
         elif self.actType == 2:
             
@@ -127,11 +166,13 @@ class Space3Mgui:
  
             self.ax.set_title("Amplitude's phase in <0, 2Pi>", fontsize=14)
             self.ax.grid(True)
-            self.ax.set_xlabel('$x$ [meter]' )
-            self.ax.set_ylabel('$t$ [second]')
-            self.ax.quiver(self.data['x'],     self.data['t'],
-                           self.data['phs_x'], self.data['phs_y'], 
-                           self.data['phi'], cmap='RdYlGn'        )
+            self.ax.set_xlabel( self.getDataLabel('x') )
+            self.ax.set_ylabel( self.getDataLabel('t') )
+                               
+            self.ax.quiver(self.data['data']['x'],     self.data['data']['t'],
+                           self.data['data']['phs_x'], self.data['data']['phs_y']
+#                           ,self.data['data']['phi'], cmap='RdYlGn'        
+                           )
 #            plt.colorbar(sctr, ax=ax1, format='$%d')
         
         # Vykreslenie diagramu
@@ -172,7 +213,7 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
-print('Minkowski space class GUI ver 0.10')
+print('Minkowski space class GUI ver 0.20')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------
