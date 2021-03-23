@@ -143,13 +143,13 @@ class Space3M:
         dz = pb['z']-pa['z']
         dt = pb['t']-pa['t']
 
-        dl2 = dx*dx + dy*dy +dz*dz
         dt2 = _C2*dt*dt
+        dl2 = dx*dx + dy*dy +dz*dz
         
         re, im = 0, 0
 
-        if dl2 > dt2: re = sqrt( dl2 - dt2 )
-        else        : im = sqrt( dt2 - dl2 )
+        if dt2 > dl2: re = sqrt( dt2 - dl2 )
+        else        : im = sqrt( dl2 - dt2 )
 
         return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 're':re, 'im':im }
 
@@ -208,7 +208,7 @@ class Space3M:
         dP   = self.getPosInt(0, pos)
         
         cell = {'pos':pos, 
-                'val':{ 'ds':(dP['re']-dP['im']), 'phi':0, 'phs':0, 'amp':0}, 'opt':opt }
+                'val':{ 'reDs':dP['re'], 'imDs':dP['im'], 'phi':0, 'phs':0, 'amp':0}, 'opt':opt }
 
         self.act[id] = cell
         
@@ -350,41 +350,44 @@ class Space3M:
         "Create and return numpy arrays for plotting from active dictionary"
         
         # Metadata section
-        meta = { 'x'    :{'dim':'m'  , 'unit':''},
-                 'y'    :{'dim':'m'  , 'unit':''},
-                 'z'    :{'dim':'m'  , 'unit':''},
-                 't'    :{'dim':'s'  , 'unit':''},
-                 'ds'   :{'dim':'s'  , 'unit':''},
-                 'phi'  :{'dim':'rad', 'unit':''},
-                 'phs'  :{'dim':'rad', 'unit':''},
-                 'phs_x':{'dim':''   , 'unit':''},
-                 'phs_y':{'dim':''   , 'unit':''}  }
+        meta = { 'x'    :{'dim':'m'   , 'unit':''},
+                 'y'    :{'dim':'m'   , 'unit':''},
+                 'z'    :{'dim':'m'   , 'unit':''},
+                 't'    :{'dim':'s'   , 'unit':''},
+                 'reDs' :{'dim':'s'   , 'unit':''},
+                 'imDs' :{'dim':'im s', 'unit':''},
+                 'phi'  :{'dim':'rad' , 'unit':''},
+                 'phs'  :{'dim':'rad' , 'unit':''},
+                 'phs_x':{'dim':''    , 'unit':''},
+                 'phs_y':{'dim':''    , 'unit':''}  }
         
         # Data section
-        data = {'x':[], 'y':[], 'z':[], 't':[],'ds':[],
+        data = {'x':[], 'y':[], 'z':[], 't':[],'reDs':[],'imDs':[],
                 'phi':[], 'phs':[], 'phs_x':[], 'phs_y':[] }
         
         toret = { 'meta':meta, 'data':data }
         
         for cell in self.act.values():
             
-            toret['data']['x'    ].append(     cell['pos']['x'  ]  )
-            toret['data']['y'    ].append(     cell['pos']['y'  ]  )
-            toret['data']['z'    ].append(     cell['pos']['z'  ]  )
-            toret['data']['t'    ].append(     cell['pos']['t'  ]  )
+            toret['data']['x'    ].append(     cell['pos']['x'   ]  )
+            toret['data']['y'    ].append(     cell['pos']['y'   ]  )
+            toret['data']['z'    ].append(     cell['pos']['z'   ]  )
+            toret['data']['t'    ].append(     cell['pos']['t'   ]  )
             
-            toret['data']['ds'   ].append(     cell['val']['ds' ]  )
-            toret['data']['phi'  ].append(     cell['val']['phi']  )
-            toret['data']['phs'  ].append(     cell['val']['phs']  )
-            toret['data']['phs_x'].append( sin(cell['val']['phs']) )
-            toret['data']['phs_y'].append( cos(cell['val']['phs']) )
+            toret['data']['reDs' ].append(     cell['val']['reDs']  )
+            toret['data']['imDs' ].append(     cell['val']['imDs']  )
+            toret['data']['phi'  ].append(     cell['val']['phi' ]  )
+            toret['data']['phs'  ].append(     cell['val']['phs' ]  )
+            
+            toret['data']['phs_x'].append( sin(cell['val']['phs' ]) )
+            toret['data']['phs_y'].append( cos(cell['val']['phs' ]) )
         
         journal.M( 'Space3M {} getPlotData'.format(self.name), 10)
         
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.21')
+print('Minkowski space class ver 0.22')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

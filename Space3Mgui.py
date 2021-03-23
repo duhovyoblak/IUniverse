@@ -11,10 +11,13 @@
 #------------------------------------------------------------------------------
 from siqo_lib import journal
 
-from matplotlib.figure                 import Figure
+#from matplotlib.figure                 import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from mpl_toolkits                      import mplot3d
 
-import tkinter as tk
+import numpy             as np
+import matplotlib.pyplot as plt
+import tkinter           as tk
 
 #==============================================================================
 # package's constants
@@ -40,8 +43,11 @@ class Space3Mgui:
         self.space3M = space
         self.title   = self.space3M.name
         
-        self.types   = {1:'Phi manifold', 2:'Phase map'}
-        self.actType = 1
+        self.axes    = {1:'Phi manifold', 2:'Phase map'}
+        self.actAxe  = 1
+        
+        self.values  = {1:'reDs', 2:'imDs', 3:'phi', 4:'phs'}
+        self.actVal  = 1
         
         self.data = self.space3M.getPlotData()
         
@@ -62,7 +68,7 @@ class Space3Mgui:
         #----------------------------------------------------------------------
         # Create layout
 
-        self.fig = Figure(figsize=(self.w*0.9/100, self.h*0.8/100), dpi=100)
+        self.fig = plt.figure(figsize=(self.w*0.9/100, self.h*0.8/100), dpi=100)
         self.ax = self.fig.add_subplot(1,1,1)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=win)  # A tk.DrawingArea.
@@ -72,17 +78,36 @@ class Space3Mgui:
         self.fig.canvas.callbacks.connect('button_press_event', self.on_click)
 
         #----------------------------------------------------------------------
-        # Radio buttons setup
+        # Axes buttons setup
         
         self.param_map_var = tk.IntVar()
         
-        self.but1 = tk.Radiobutton(win, text='pm_text 1', variable=self.param_map_var, value=1, command=self.on_button)
-        self.but1.place(x=self.w * 0.91, y = self.h * (0.1 + 3 * 0.03))
+        self.butAx1 = tk.Radiobutton(win, text='pm_text 1', variable=self.param_map_var, value=1, command=self.on_butAxe)
+        self.butAx1.place(x=self.w * 0.91, y = self.h * (0.1 + 3 * 0.03))
 
-        self.but2 = tk.Radiobutton(win, text='pm_text 2', variable=self.param_map_var, value=2, command=self.on_button)
-        self.but2.place(x=self.w * 0.91, y = self.h * (0.1 + 4 * 0.03))
+        self.butAx2 = tk.Radiobutton(win, text='pm_text 2', variable=self.param_map_var, value=2, command=self.on_butAxe)
+        self.butAx2.place(x=self.w * 0.91, y = self.h * (0.1 + 4 * 0.03))
 
-        self.but1.select()
+        self.butAx1.select()
+        
+        #----------------------------------------------------------------------
+        # Value buttons setup
+        
+        self.map_var = tk.IntVar()
+        
+        self.butReDs = tk.Radiobutton(win, text='real Ds', variable=self.map_var, value=1, command=self.on_butVal)
+        self.butReDs.place(x=self.w * 0.91, y = self.h * (0.1 + 7 * 0.03))
+
+        self.butImDs = tk.Radiobutton(win, text='im Ds', variable=self.map_var, value=2, command=self.on_butVal)
+        self.butImDs.place(x=self.w * 0.91, y = self.h * (0.1 + 8 * 0.03))
+
+        self.butPhi  = tk.Radiobutton(win, text='Phi', variable=self.map_var, value=3, command=self.on_butVal)
+        self.butPhi.place(x=self.w * 0.91, y = self.h * (0.1 + 9 * 0.03))
+
+        self.butPhs  = tk.Radiobutton(win, text='Phasei', variable=self.map_var, value=4, command=self.on_butVal)
+        self.butPhs.place(x=self.w * 0.91, y = self.h * (0.1 + 10 * 0.03))
+
+        self.butReDs.select()
         
         #----------------------------------------------------------------------
         # Sliders setup
@@ -144,36 +169,49 @@ class Space3Mgui:
     def show(self):
         "Show Minkovski space according to given parameters"
         
-        journal.I( 'Space3Mgui {} show {}'.format(self.title, self.types[self.actType]), 10 )
+        journal.I( 'Space3Mgui {} show {}'.format(self.title, self.axes[self.actAxe]), 10 )
         
+        self.ax3 = self.fig.add_subplot(1,2,2, projection='3d')
         
-        self.ax.clear()
         
         # Test aktivneho typu zobrazenia
-        if self.actType == 1:
+        if self.actAxe == 1:
             
+            self.ax.remove()
+            self.ax = self.fig.add_subplot(1,1,1, projection='3d')
+        
             # Vykreslenie phi plochy
             self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
-            self.ax.grid(True)
+#            self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel('x') )
             self.ax.set_ylabel( self.getDataLabel('t') )
-            sctr = self.ax.scatter(x=self.data['data']['x'], y=self.data['data']['t'],
-                                   c=self.data['data']['phi'], cmap='RdYlGn')
             
-        elif self.actType == 2:
+            X = np.array(self.data['data']['x' ])
+            Y = np.array(self.data['data']['t' ])
+            
+            val = self.values[self.actVal]
+            Z = np.array(self.data['data'][val])
+            
+            self.ax.plot_trisurf( X, Y, Z, linewidth=0.2, cmap='RdYlGn', antialiased=False)
+            
+        elif self.actAxe == 2:
+            
+            self.ax.remove()
+            self.ax = self.fig.add_subplot(1,1,1)
             
             # Vykreslenie phi plochy
- 
             self.ax.set_title("Amplitude's phase in <0, 2Pi>", fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel('x') )
             self.ax.set_ylabel( self.getDataLabel('t') )
-                               
-            self.ax.quiver(self.data['data']['x'],     self.data['data']['t'],
-                           self.data['data']['phs_x'], self.data['data']['phs_y']
-#                           ,self.data['data']['phi'], cmap='RdYlGn'        
-                           )
-#            plt.colorbar(sctr, ax=ax1, format='$%d')
+
+            X = np.array(self.data['data']['x' ])
+            Y = np.array(self.data['data']['t' ])
+
+            U = np.array(self.data['data']['phs_x' ])
+            V = np.array(self.data['data']['phs_y' ])
+            
+            self.ax.quiver( X, Y, U, V )
         
         # Vykreslenie diagramu
         self.fig.tight_layout()
@@ -182,10 +220,17 @@ class Space3Mgui:
         journal.O( 'Space3Mgui {} show done'.format(self.title), 10 )
         
     #--------------------------------------------------------------------------
-    def on_button(self):
-        "Resolve radio buttons selection for active type of figure"
+    def on_butAxe(self):
+        "Resolve radio buttons selection for active Axe of figure"
         
-        self.actType = self.param_map_var.get() # get integer value for selected button
+        self.actAxe = self.param_map_var.get() # get integer value for selected button
+        self.show()
+    
+    #--------------------------------------------------------------------------
+    def on_butVal(self):
+        "Resolve radio buttons selection for active Value in plot"
+        
+        self.actVal = self.map_var.get() # get integer value for selected button
         self.show()
     
     #--------------------------------------------------------------------------
