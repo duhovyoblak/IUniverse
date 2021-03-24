@@ -350,16 +350,16 @@ class Space3M:
         "Create and return numpy arrays for plotting from active dictionary"
         
         # Metadata section
-        meta = { 'x'    :{'dim':'m'   , 'unit':''},
-                 'y'    :{'dim':'m'   , 'unit':''},
-                 'z'    :{'dim':'m'   , 'unit':''},
-                 't'    :{'dim':'s'   , 'unit':''},
-                 'reDs' :{'dim':'s'   , 'unit':''},
-                 'imDs' :{'dim':'im s', 'unit':''},
-                 'phi'  :{'dim':'rad' , 'unit':''},
-                 'phs'  :{'dim':'rad' , 'unit':''},
-                 'phs_x':{'dim':''    , 'unit':''},
-                 'phs_y':{'dim':''    , 'unit':''}  }
+        meta = { 'x'    :{'dim':'m'   , 'unit':'', 'coeff':1},
+                 'y'    :{'dim':'m'   , 'unit':'', 'coeff':1},
+                 'z'    :{'dim':'m'   , 'unit':'', 'coeff':1},
+                 't'    :{'dim':'s'   , 'unit':'', 'coeff':1},
+                 'reDs' :{'dim':'s'   , 'unit':'', 'coeff':1},
+                 'imDs' :{'dim':'im s', 'unit':'', 'coeff':1},
+                 'phi'  :{'dim':'rad' , 'unit':'', 'coeff':1},
+                 'phs'  :{'dim':'rad' , 'unit':'', 'coeff':1},
+                 'phs_x':{'dim':''    , 'unit':'', 'coeff':1},
+                 'phs_y':{'dim':''    , 'unit':'', 'coeff':1}  }
         
         # Data section
         data = {'x':[], 'y':[], 'z':[], 't':[],'reDs':[],'imDs':[],

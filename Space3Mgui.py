@@ -23,6 +23,19 @@ import tkinter           as tk
 # package's constants
 #------------------------------------------------------------------------------
 
+_WIN            = '1280x1000'
+_DPI            = 100
+_FIG_W          = 0.8
+_FIG_H          = 0.9
+
+_BTN_DIS_W      = 0.1
+_BTN_DIS_H      = 0.03
+
+_BTN_AXE_W      = 0.82
+_BTN_AXE_H      = 0.1
+
+_BTN_VAL_W      = 0.82
+_BTN_VAL_H      = 0.2
 
 #==============================================================================
 # class Space3Mgui
@@ -46,8 +59,9 @@ class Space3Mgui:
         self.axes    = {1:'Phi manifold', 2:'Phase map'}
         self.actAxe  = 1
         
-        self.values  = {1:'reDs', 2:'imDs', 3:'phi', 4:'phs'}
-        self.actVal  = 1
+        self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'reDs', 6:'imDs', 7:'phi', 8:'phs', 9:'phs_x', 10:'phs_y'}
+        self.actValX = 5
+        self.actValY = 6
         
         self.data = self.space3M.getPlotData()
         
@@ -59,7 +73,7 @@ class Space3Mgui:
         # Create output window
         win = tk.Tk()
         win.title(self.title)
-        win.geometry('1280x1000')
+        win.geometry(_WIN)
         win.resizable(False,False)
         win.update()
         self.w = win.winfo_width()
@@ -68,7 +82,7 @@ class Space3Mgui:
         #----------------------------------------------------------------------
         # Create layout
 
-        self.fig = plt.figure(figsize=(self.w*0.9/100, self.h*0.8/100), dpi=100)
+        self.fig = plt.figure(figsize=(self.w*_FIG_W/100, self.h*_FIG_H/100), dpi=_DPI)
         self.ax = self.fig.add_subplot(1,1,1)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=win)  # A tk.DrawingArea.
@@ -80,35 +94,36 @@ class Space3Mgui:
         #----------------------------------------------------------------------
         # Axes buttons setup
         
-        self.param_map_var = tk.IntVar()
+        self.butAxeMap = tk.IntVar()
         
-        self.butAx1 = tk.Radiobutton(win, text='pm_text 1', variable=self.param_map_var, value=1, command=self.on_butAxe)
-        self.butAx1.place(x=self.w * 0.91, y = self.h * (0.1 + 3 * 0.03))
+        self.butAx1 = tk.Radiobutton(win, text='pm_text 1', variable=self.butAxeMap, value=1, command=self.onButAxe)
+        self.butAx1.place(x=self.w * (_BTN_AXE_W             ), y = self.h * _BTN_AXE_H)
 
-        self.butAx2 = tk.Radiobutton(win, text='pm_text 2', variable=self.param_map_var, value=2, command=self.on_butAxe)
-        self.butAx2.place(x=self.w * 0.91, y = self.h * (0.1 + 4 * 0.03))
+        self.butAx2 = tk.Radiobutton(win, text='pm_text 2', variable=self.butAxeMap, value=2, command=self.onButAxe)
+        self.butAx2.place(x=self.w * (_BTN_AXE_W + _BTN_DIS_W), y = self.h * _BTN_AXE_H)
 
         self.butAx1.select()
         
         #----------------------------------------------------------------------
-        # Value buttons setup
+        # Value buttons X setup
         
-        self.map_var = tk.IntVar()
+        self.butValMapX = tk.IntVar()
         
-        self.butReDs = tk.Radiobutton(win, text='real Ds', variable=self.map_var, value=1, command=self.on_butVal)
-        self.butReDs.place(x=self.w * 0.91, y = self.h * (0.1 + 7 * 0.03))
-
-        self.butImDs = tk.Radiobutton(win, text='im Ds', variable=self.map_var, value=2, command=self.on_butVal)
-        self.butImDs.place(x=self.w * 0.91, y = self.h * (0.1 + 8 * 0.03))
-
-        self.butPhi  = tk.Radiobutton(win, text='Phi', variable=self.map_var, value=3, command=self.on_butVal)
-        self.butPhi.place(x=self.w * 0.91, y = self.h * (0.1 + 9 * 0.03))
-
-        self.butPhs  = tk.Radiobutton(win, text='Phasei', variable=self.map_var, value=4, command=self.on_butVal)
-        self.butPhs.place(x=self.w * 0.91, y = self.h * (0.1 + 10 * 0.03))
+        for i, val in self.values.items():
+            self.butReDs = tk.Radiobutton(win, text="{} [{}]".format(val, self.data['meta'][val]['dim']), variable=self.butValMapX, value=i, command=self.onButValX)
+            self.butReDs.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
 
         self.butReDs.select()
         
+        #----------------------------------------------------------------------
+        # Value buttons Y setup
+        
+        self.butValMapY = tk.IntVar()
+
+        for i, val in self.values.items():
+            self.butY = tk.Radiobutton(win, text="{} [{}]".format(val, self.data['meta'][val]['dim']), variable=self.butValMapY, value=i, command=self.onButValY)
+            self.butY.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
+
         #----------------------------------------------------------------------
         # Sliders setup
         
@@ -150,7 +165,8 @@ class Space3Mgui:
                 
             # Preskalujem udaje
             for i in range(len(lst)): lst[i] = lst[i] * c[1]
-            self.data['meta'][key]['unit'] = c[0]
+            self.data['meta'][key]['unit' ] = c[0]
+            self.data['meta'][key]['coeff'] = c[1]
             
             journal.M( 'Space3Mgui {} Data list {} was re-scaled by {:e} with preposition {}'.format(self.title, key, c[1], c[0]), 10 )
                 
@@ -189,8 +205,8 @@ class Space3Mgui:
             X = np.array(self.data['data']['x' ])
             Y = np.array(self.data['data']['t' ])
             
-            val = self.values[self.actVal]
-            Z = np.array(self.data['data'][val])
+            valX = self.values[self.actValX]
+            Z = np.array(self.data['data'][valX])
             
             self.ax.plot_trisurf( X, Y, Z, linewidth=0.2, cmap='RdYlGn', antialiased=False)
             
@@ -208,9 +224,12 @@ class Space3Mgui:
             X = np.array(self.data['data']['x' ])
             Y = np.array(self.data['data']['t' ])
 
-            U = np.array(self.data['data']['phs_x' ])
-            V = np.array(self.data['data']['phs_y' ])
-            
+            valX = self.values[self.actValX]
+            U = np.array(self.data['data'][valX])
+
+            valY = self.values[self.actValY]
+            V = np.array(self.data['data'][valY])
+
             self.ax.quiver( X, Y, U, V )
         
         # Vykreslenie diagramu
@@ -220,17 +239,24 @@ class Space3Mgui:
         journal.O( 'Space3Mgui {} show done'.format(self.title), 10 )
         
     #--------------------------------------------------------------------------
-    def on_butAxe(self):
+    def onButAxe(self):
         "Resolve radio buttons selection for active Axe of figure"
         
-        self.actAxe = self.param_map_var.get() # get integer value for selected button
+        self.actAxe = self.butAxeMap.get() # get integer value for selected button
         self.show()
     
     #--------------------------------------------------------------------------
-    def on_butVal(self):
-        "Resolve radio buttons selection for active Value in plot"
+    def onButValX(self):
+        "Resolve radio buttons selection for active X Value in plot"
         
-        self.actVal = self.map_var.get() # get integer value for selected button
+        self.actValX = self.butValMapX.get() # get integer value for selected button
+        self.show()
+    
+    #--------------------------------------------------------------------------
+    def onButValY(self):
+        "Resolve radio buttons selection for active Y Value in plot"
+        
+        self.actValY = self.butValMapY.get() # get integer value for selected button
         self.show()
     
     #--------------------------------------------------------------------------
@@ -246,8 +272,12 @@ class Space3Mgui:
         
         if event.inaxes is not None:
             
-            x = event.xdata
-            y = event.ydata
+            x = float(event.xdata)
+            y = float(event.ydata)
+            
+            x = x / self.data['meta']['x']['coeff']
+            y = y / self.data['meta']['t']['coeff']
+            
             id = self.space3M.getIdFromPos({'x':x, 'y':0, 'z':0, 't':y})
             
             self.space3M.printCell(id)
