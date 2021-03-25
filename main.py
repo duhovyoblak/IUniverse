@@ -28,13 +28,13 @@ if __name__ =='__main__':
     st = Space3M('test')
     st.createSpace( {'xMin':-20, 'xMax':20, 'yMin':0, 'yMax':1, 'zMin':0, 'zMax':1, 'tMin':-10, 'tMax':30 }, 0.2 )
     
-    p = PartCommon( 'test', {'x':-1, 'y':0, 'z':0, 't':0},  510998.950 )
+    p = PartCommon( 'p1', {'x':-1, 'y':0, 'z':0, 't':0},  510998.950 )
     p.setLambda(3)
     st.addPart(p)
 
-#    r = PartCommon( 'test', {'x':1, 'y':0, 'z':0, 't':0},  510998.950 )
-#    r.setLambda(3)
-#    st.addPart(r)
+    r = PartCommon( 'p2', {'x':0, 'y':0, 'z':0, 't':0},  510998.950 )
+    r.setLambda(3)
+    st.addPart(r)
 
 
 

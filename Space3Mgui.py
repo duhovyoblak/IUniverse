@@ -23,7 +23,8 @@ import tkinter           as tk
 # package's constants
 #------------------------------------------------------------------------------
 
-_WIN            = '1280x1000'
+_WIN            = '1680x1050'
+#_WIN            = '1280x1000'
 _DPI            = 100
 _FIG_W          = 0.8
 _FIG_H          = 0.9
@@ -59,13 +60,13 @@ class Space3Mgui:
         self.axes    = {1:'Phi manifold', 2:'Phase map'}
         self.actAxe  = 1
         
-        self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'reDs', 6:'imDs', 7:'phi', 8:'phs', 9:'phs_x', 10:'phs_y'}
-        self.actValX = 5
-        self.actValY = 6
+        self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'phi', 6:'reDs', 7:'imDs', 8:'reAmp', 9:'imAmp'}
+        self.actValX = 8
+        self.actValY = 9
         
-        self.data = self.space3M.getPlotData()
-        
- #       for key, lst in self.data['data'].items(): print( "Data list '{}' has length {}".format(key, len(lst)) )
+        dat  = self.space3M.getPlotData()
+        self.meta    = dat['meta']
+        self.data    = dat['data']
         
         self.reUnit()
         
@@ -110,7 +111,7 @@ class Space3Mgui:
         self.butValMapX = tk.IntVar()
         
         for i, val in self.values.items():
-            self.butReDs = tk.Radiobutton(win, text="{} [{}]".format(val, self.data['meta'][val]['dim']), variable=self.butValMapX, value=i, command=self.onButValX)
+            self.butReDs = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapX, value=i, command=self.onButValX)
             self.butReDs.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
 
         self.butReDs.select()
@@ -121,7 +122,7 @@ class Space3Mgui:
         self.butValMapY = tk.IntVar()
 
         for i, val in self.values.items():
-            self.butY = tk.Radiobutton(win, text="{} [{}]".format(val, self.data['meta'][val]['dim']), variable=self.butValMapY, value=i, command=self.onButValY)
+            self.butY = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapY, value=i, command=self.onButValY)
             self.butY.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
 
         #----------------------------------------------------------------------
@@ -147,7 +148,7 @@ class Space3Mgui:
         "Re-scale all data vectors for better understability"
         
         journal.I( 'Space3Mgui {} reUnit...'.format(self.title), 10 )
-        for key, lst in self.data['data'].items():
+        for key, lst in self.data.items():
             
             pL = list(lst)  # Urobim si kopiu listu na pokusy :-)
             pL.sort()
@@ -165,8 +166,8 @@ class Space3Mgui:
                 
             # Preskalujem udaje
             for i in range(len(lst)): lst[i] = lst[i] * c[1]
-            self.data['meta'][key]['unit' ] = c[0]
-            self.data['meta'][key]['coeff'] = c[1]
+            self.meta[key]['unit' ] = c[0]
+            self.meta[key]['coeff'] = c[1]
             
             journal.M( 'Space3Mgui {} Data list {} was re-scaled by {:e} with preposition {}'.format(self.title, key, c[1], c[0]), 10 )
                 
@@ -176,8 +177,8 @@ class Space3Mgui:
     def getDataLabel(self, key):
         "Return data label for given data's key"
         
-        return "${}$ [{}{}]".format(key, self.data['meta'][key]['unit'], 
-                                         self.data['meta'][key]['dim' ])
+        return "${}$ [{}{}]".format(key, self.meta[key]['unit'], 
+                                         self.meta[key]['dim' ])
         
     #==========================================================================
     # GUI methods
@@ -202,11 +203,11 @@ class Space3Mgui:
             self.ax.set_xlabel( self.getDataLabel('x') )
             self.ax.set_ylabel( self.getDataLabel('t') )
             
-            X = np.array(self.data['data']['x' ])
-            Y = np.array(self.data['data']['t' ])
+            X = np.array(self.data['x' ])
+            Y = np.array(self.data['t' ])
             
             valX = self.values[self.actValX]
-            Z = np.array(self.data['data'][valX])
+            Z = np.array(self.data[valX])
             
             self.ax.plot_trisurf( X, Y, Z, linewidth=0.2, cmap='RdYlGn', antialiased=False)
             
@@ -221,14 +222,14 @@ class Space3Mgui:
             self.ax.set_xlabel( self.getDataLabel('x') )
             self.ax.set_ylabel( self.getDataLabel('t') )
 
-            X = np.array(self.data['data']['x' ])
-            Y = np.array(self.data['data']['t' ])
+            X = np.array(self.data['x' ])
+            Y = np.array(self.data['t' ])
 
             valX = self.values[self.actValX]
-            U = np.array(self.data['data'][valX])
+            U = np.array(self.data[valX])
 
             valY = self.values[self.actValY]
-            V = np.array(self.data['data'][valY])
+            V = np.array(self.data[valY])
 
             self.ax.quiver( X, Y, U, V )
         
@@ -275,8 +276,8 @@ class Space3Mgui:
             x = float(event.xdata)
             y = float(event.ydata)
             
-            x = x / self.data['meta']['x']['coeff']
-            y = y / self.data['meta']['t']['coeff']
+            x = x / self.meta['x']['coeff']
+            y = y / self.meta['t']['coeff']
             
             id = self.space3M.getIdFromPos({'x':x, 'y':0, 'z':0, 't':y})
             
@@ -288,7 +289,7 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
-print('Minkowski space class GUI ver 0.20')
+print('Minkowski space class GUI ver 0.30')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

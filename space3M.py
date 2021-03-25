@@ -12,6 +12,7 @@
 from siqo_lib import journal
 
 from math     import sqrt, exp, sin, cos
+import cmath as cm
 
 #==============================================================================
 # package's constants
@@ -59,7 +60,7 @@ class Space3M:
         self.base  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
         self.blur  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
 
-        self.act   = self.setAct('base')  # Active dictionary = all methods use this data
+        self.setAct('base')  # Active dictionary = all methods use this data
         
         self.parts = {}                   # {'part.name':part} all of particles in space
 
@@ -142,17 +143,12 @@ class Space3M:
         dy = pb['y']-pa['y']
         dz = pb['z']-pa['z']
         dt = pb['t']-pa['t']
-
+        
         dt2 = _C2*dt*dt
         dl2 = dx*dx + dy*dy +dz*dz
         
-        re, im = 0, 0
-
-        if dt2 > dl2: re = sqrt( dt2 - dl2 )
-        else        : im = sqrt( dl2 - dt2 )
-
-        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 're':re, 'im':im }
-
+        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'ds':cm.sqrt(dt2-dl2) }
+        
     #--------------------------------------------------------------------------
     def getGridInt(self, ga, gb):
         "Return metric between two grid positions in eucleidian grid distance"
@@ -196,7 +192,7 @@ class Space3M:
             return toret
             
         except:
-            journal( 'Space3M {} getIdStruct ERROR id={}'.format(self.name, id), 0)
+            journal.M( 'Space3M {} getIdStruct ERROR id={}'.format(self.name, id), 0)
             return toret
 
     #--------------------------------------------------------------------------
@@ -205,10 +201,11 @@ class Space3M:
         
         pos  = self.getPos(grid)
         id   = self.getIdFromGrid(grid)
-        dP   = self.getPosInt(0, pos)
+        dInt = self.getPosInt(0, pos)
         
-        cell = {'pos':pos, 
-                'val':{ 'reDs':dP['re'], 'imDs':dP['im'], 'phi':0, 'phs':0, 'amp':0}, 'opt':opt }
+        cell = {'pos': pos, 
+                'val': { 'cDs':dInt['ds'], 'phi':0, 'cAmp':complex(0,0) },
+                'opt': opt }
 
         self.act[id] = cell
         
@@ -237,7 +234,7 @@ class Space3M:
             toret = self.act[id]
         
         except KeyError:
-            toret = self.createCellById(id, opt)
+            toret = self.addCellById(id, opt)
         
         return toret
 
@@ -313,8 +310,10 @@ class Space3M:
             dP  = self.getPosInt( pp, cell['pos'] )
             phi = om*dP['dt'] - abs( kv['x']*dP['dx'] + kv['y']*dP['dy'] + kv['z']*dP['dz'] )
             
-            cell['val']['phi'] += phi
-            cell['val']['phs']  = cell['val']['phi'] % _2PI
+#            cell['val']['phi'] += phi
+            cAmp = cm.exp(complex(0,phi))
+            
+            cell['val']['cAmp'] = cell['val']['cAmp'] + cAmp
 
         journal.M( 'Space3M {} partToSpace for {}'.format(self.name, part.getName()), 10)
 
@@ -350,44 +349,45 @@ class Space3M:
         "Create and return numpy arrays for plotting from active dictionary"
         
         # Metadata section
-        meta = { 'x'    :{'dim':'m'   , 'unit':'', 'coeff':1},
-                 'y'    :{'dim':'m'   , 'unit':'', 'coeff':1},
-                 'z'    :{'dim':'m'   , 'unit':'', 'coeff':1},
-                 't'    :{'dim':'s'   , 'unit':'', 'coeff':1},
-                 'reDs' :{'dim':'s'   , 'unit':'', 'coeff':1},
-                 'imDs' :{'dim':'im s', 'unit':'', 'coeff':1},
-                 'phi'  :{'dim':'rad' , 'unit':'', 'coeff':1},
-                 'phs'  :{'dim':'rad' , 'unit':'', 'coeff':1},
-                 'phs_x':{'dim':''    , 'unit':'', 'coeff':1},
-                 'phs_y':{'dim':''    , 'unit':'', 'coeff':1}  }
+        meta = { 'x'     :{'dim':'m'      , 'unit':'', 'coeff':1},
+                 'y'     :{'dim':'m'      , 'unit':'', 'coeff':1},
+                 'z'     :{'dim':'m'      , 'unit':'', 'coeff':1},
+                 't'     :{'dim':'s'      , 'unit':'', 'coeff':1},
+                 
+                 'phi'   :{'dim':'rad'    , 'unit':'', 'coeff':1},
+                 'reDs'  :{'dim':'m.re'   , 'unit':'', 'coeff':1},
+                 'imDs'  :{'dim':'m.im'   , 'unit':'', 'coeff':1},
+                 
+                 'reAmp' :{'dim':'Amp.re' , 'unit':'', 'coeff':1},
+                 'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1}  }
         
         # Data section
-        data = {'x':[], 'y':[], 'z':[], 't':[],'reDs':[],'imDs':[],
-                'phi':[], 'phs':[], 'phs_x':[], 'phs_y':[] }
+        data = {'x':[], 'y':[], 'z':[], 't':[], 'phi':[],
+                'reDs' :[], 'imDs' :[],
+                'reAmp':[], 'imAmp':[]  }
         
         toret = { 'meta':meta, 'data':data }
         
         for cell in self.act.values():
             
-            toret['data']['x'    ].append(     cell['pos']['x'   ]  )
-            toret['data']['y'    ].append(     cell['pos']['y'   ]  )
-            toret['data']['z'    ].append(     cell['pos']['z'   ]  )
-            toret['data']['t'    ].append(     cell['pos']['t'   ]  )
+            toret['data']['x'    ].append( cell['pos']['x'   ]       )
+            toret['data']['y'    ].append( cell['pos']['y'   ]       )
+            toret['data']['z'    ].append( cell['pos']['z'   ]       )
+            toret['data']['t'    ].append( cell['pos']['t'   ]       )
             
-            toret['data']['reDs' ].append(     cell['val']['reDs']  )
-            toret['data']['imDs' ].append(     cell['val']['imDs']  )
-            toret['data']['phi'  ].append(     cell['val']['phi' ]  )
-            toret['data']['phs'  ].append(     cell['val']['phs' ]  )
+            toret['data']['phi'  ].append( cell['val']['phi' ]       )
+            toret['data']['reDs' ].append( cell['val']['cDs' ].real  )
+            toret['data']['imDs' ].append( cell['val']['cDs' ].imag  )
             
-            toret['data']['phs_x'].append( sin(cell['val']['phs' ]) )
-            toret['data']['phs_y'].append( cos(cell['val']['phs' ]) )
+            toret['data']['reAmp'].append( cell['val']['cAmp'].real  )
+            toret['data']['imAmp'].append( cell['val']['cAmp'].imag  )
         
         journal.M( 'Space3M {} getPlotData'.format(self.name), 10)
         
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.22')
+print('Minkowski space class ver 0.30')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------
