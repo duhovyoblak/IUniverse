@@ -27,16 +27,16 @@ _WIN            = '1680x1050'
 #_WIN            = '1280x1000'
 _DPI            = 100
 _FIG_W          = 0.8
-_FIG_H          = 0.9
+_FIG_H          = 1.0
 
 _BTN_DIS_W      = 0.1
 _BTN_DIS_H      = 0.03
 
-_BTN_AXE_W      = 0.82
-_BTN_AXE_H      = 0.1
+_BTN_AXE_W      = 0.81
+_BTN_AXE_H      = 0.05
 
-_BTN_VAL_W      = 0.82
-_BTN_VAL_H      = 0.2
+_BTN_VAL_W      = 0.81
+_BTN_VAL_H      = 0.15
 
 #==============================================================================
 # class Space3Mgui
@@ -57,12 +57,14 @@ class Space3Mgui:
         self.space3M = space
         self.title   = self.space3M.name
         
-        self.axes    = {1:'Phi manifold', 2:'Phase map'}
+        self.axes    = {1:'Scatter', 2:'Quiver', 3:'3D projection'}
         self.actAxe  = 1
         
         self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'phi', 6:'reDs', 7:'imDs', 8:'reAmp', 9:'imAmp'}
-        self.actValX = 8
-        self.actValY = 9
+        self.actValX = 1
+        self.actValY = 4
+        self.actValU = 8
+        self.actValV = 9
         
         dat  = self.space3M.getPlotData()
         self.meta    = dat['meta']
@@ -97,11 +99,14 @@ class Space3Mgui:
         
         self.butAxeMap = tk.IntVar()
         
-        self.butAx1 = tk.Radiobutton(win, text='pm_text 1', variable=self.butAxeMap, value=1, command=self.onButAxe)
-        self.butAx1.place(x=self.w * (_BTN_AXE_W             ), y = self.h * _BTN_AXE_H)
+        self.butAx1 = tk.Radiobutton(win, text='Scatter chart', variable=self.butAxeMap, value=1, command=self.onButAxe)
+        self.butAx1.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 0 * _BTN_DIS_H) )
 
-        self.butAx2 = tk.Radiobutton(win, text='pm_text 2', variable=self.butAxeMap, value=2, command=self.onButAxe)
-        self.butAx2.place(x=self.w * (_BTN_AXE_W + _BTN_DIS_W), y = self.h * _BTN_AXE_H)
+        self.butAx2 = tk.Radiobutton(win, text='Quiver chart',  variable=self.butAxeMap, value=2, command=self.onButAxe)
+        self.butAx2.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 1 * _BTN_DIS_H) )
+
+        self.butAx3 = tk.Radiobutton(win, text='3D projection', variable=self.butAxeMap, value=3, command=self.onButAxe)
+        self.butAx3.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 2 * _BTN_DIS_H) )
 
         self.butAx1.select()
         
@@ -126,11 +131,29 @@ class Space3Mgui:
             self.butY.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
 
         #----------------------------------------------------------------------
+        # Value buttons U setup
+        
+        self.butValMapU = tk.IntVar()
+
+        for i, val in self.values.items():
+            self.butU = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapU, value=i, command=self.onButValU)
+            self.butU.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + (i+10) * _BTN_DIS_H))
+
+        #----------------------------------------------------------------------
+        # Value buttons V setup
+        
+        self.butValMapV = tk.IntVar()
+
+        for i, val in self.values.items():
+            self.butV = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapV, value=i, command=self.onButValV)
+            self.butV.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + (i+10) * _BTN_DIS_H))
+
+        #----------------------------------------------------------------------
         # Sliders setup
         
         self.g = 9.8
-        self.g_slider = tk.Scale(win, from_=0.0, to=20.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.4, command=self.on_gSlider, label="g")
-        self.g_slider.place(x=self.w * 0.5, y=self.h * 0.9)
+        self.g_slider = tk.Scale(win, from_=0.0, to=20.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.on_gSlider, label="g")
+        self.g_slider.place(x=self.w * 0.81, y=self.h * 0.9)
         self.g_slider.set(9.8)
         
         #----------------------------------------------------------------------
@@ -190,50 +213,50 @@ class Space3Mgui:
         
         self.ax3 = self.fig.add_subplot(1,2,2, projection='3d')
         
-        
-        # Test aktivneho typu zobrazenia
+        # Odstranenie stareho grafu
+        self.ax.remove()
+
+        # Ziskanie nastavenia grafu
+        valX = self.values[self.actValX]
+        valY = self.values[self.actValY]
+        valU = self.values[self.actValU]
+        valV = self.values[self.actValV]
+
+        X = np.array(self.data[valX])
+        Y = np.array(self.data[valY])
+        U = np.array(self.data[valU])
+        V = np.array(self.data[valV])
+    
+        # Priprava noveho grafu
         if self.actAxe == 1:
             
-            self.ax.remove()
-            self.ax = self.fig.add_subplot(1,1,1, projection='3d')
-        
-            # Vykreslenie phi plochy
+            self.ax = self.fig.add_subplot(1,1,1)
             self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
-#            self.ax.grid(True)
-            self.ax.set_xlabel( self.getDataLabel('x') )
-            self.ax.set_ylabel( self.getDataLabel('t') )
+            self.ax.grid(True)
+            self.ax.set_xlabel( self.getDataLabel(valX) )
+            self.ax.set_ylabel( self.getDataLabel(valY) )
             
-            X = np.array(self.data['x' ])
-            Y = np.array(self.data['t' ])
-            
-            valX = self.values[self.actValX]
-            Z = np.array(self.data[valX])
-            
-            self.ax.plot_trisurf( X, Y, Z, linewidth=0.2, cmap='RdYlGn', antialiased=False)
+            self.ax.scatter( X, Y, U, cmap='RdYlGn')
             
         elif self.actAxe == 2:
             
-            self.ax.remove()
             self.ax = self.fig.add_subplot(1,1,1)
-            
-            # Vykreslenie phi plochy
             self.ax.set_title("Amplitude's phase in <0, 2Pi>", fontsize=14)
             self.ax.grid(True)
-            self.ax.set_xlabel( self.getDataLabel('x') )
-            self.ax.set_ylabel( self.getDataLabel('t') )
-
-            X = np.array(self.data['x' ])
-            Y = np.array(self.data['t' ])
-
-            valX = self.values[self.actValX]
-            U = np.array(self.data[valX])
-
-            valY = self.values[self.actValY]
-            V = np.array(self.data[valY])
-
+            self.ax.set_xlabel( self.getDataLabel(valX) )
+            self.ax.set_ylabel( self.getDataLabel(valY) )
             self.ax.quiver( X, Y, U, V )
+            
+        elif self.actAxe == 3:
+            
+            self.ax = self.fig.add_subplot(1,1,1, projection='3d')
+            self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
+            self.ax.grid(True)
+            self.ax.set_xlabel( self.getDataLabel(valX) )
+            self.ax.set_ylabel( self.getDataLabel(valY) )
+            self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlGn', antialiased=False)
         
-        # Vykreslenie diagramu
+        # Vykreslenie noveho grafu
         self.fig.tight_layout()
         self.canvas.draw()
     
@@ -258,6 +281,20 @@ class Space3Mgui:
         "Resolve radio buttons selection for active Y Value in plot"
         
         self.actValY = self.butValMapY.get() # get integer value for selected button
+        self.show()
+    
+    #--------------------------------------------------------------------------
+    def onButValU(self):
+        "Resolve radio buttons selection for active U Value in plot"
+        
+        self.actValU = self.butValMapU.get() # get integer value for selected button
+        self.show()
+    
+    #--------------------------------------------------------------------------
+    def onButValV(self):
+        "Resolve radio buttons selection for active V Value in plot"
+        
+        self.actValV = self.butValMapV.get() # get integer value for selected button
         self.show()
     
     #--------------------------------------------------------------------------
