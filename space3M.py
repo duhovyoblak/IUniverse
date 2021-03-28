@@ -49,20 +49,15 @@ class Space3M:
 
         journal.I( 'Space3M constructor for {}...'.format(name), 10 )
         
-        self.name  = name                 # unique name for Minkowski space in Your project
+        self.name  = name     # unique name for Minkowski space in Your project
+        self.shape = {}       # grid's shape as {xMin, xMax, yMin, yMax, zMin, zMax, tMin, tMax}
+        self.base  = {}       # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
+        self.blur  = {}       # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
+        self.parts = {}       # {'part.name':part} all of particles in space
+        self.mpg   = 1        # meters  per 1 grid distance
+        self.spg   = 1        # seconds per 1 grid distance
         
-        self.setZoom(10)
-        self.mpg   = 1                    # meters  per 1 grid distance
-        self.spg   = 1                    # seconds per 1 grid distance
-        
-        self.setZoom(10)                  # reset mpg and spg parameters
-
-        self.base  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
-        self.blur  = {}  # {id:cell}  id='<name>#gx#gy#gz#gt' cell={pos:{}, val:{}, opt:{}}
-
-        self.setAct('base')  # Active dictionary = all methods use this data
-        
-        self.parts = {}                   # {'part.name':part} all of particles in space
+        self.clear()           # reset all parameters
 
         journal.O( 'Space3M {} created'.format(self.name), 10 )
 
@@ -70,15 +65,16 @@ class Space3M:
     def clear(self):
         "Clear all data content and set default transformation parameters"
 
+        # Vycisti zoznam bodov v oboch dictionaries
         self.base.clear()
         self.blur.clear()
-
         self.setAct('base')
         
-        self.parts.clear()
+        self.shape = {'xMin':0, 'xMax':0, 'yMin':0, 'yMax':0, 'zMin':0, 'zMax':0, 'tMin':0, 'tMax':0}
 
-        self.mpg  = 1                 # meters  per 1 grid distance
-        self.spg  = self.mpg / _C     # seconds per 1 grid distance
+        # Vycisti zoznam castic a nastavi zoom
+        self.parts.clear()
+        self.setZoom(1)
 
         journal.M( 'Space3M {} ALL cleared'.format(self.name), 10)
         
@@ -254,7 +250,6 @@ class Space3M:
         
         try: 
             cell = self.act[id]
-            
             print( id, cell['pos'], cell['val'], cell['opt'] )
         
         except KeyError:
@@ -284,6 +279,9 @@ class Space3M:
         self.clear()
         self.setZoom(mpg, spg)
         
+        self.shape = shape
+        journal.M( 'Space3M {} shape is {}'.format(self.name, self.shape), 10)
+        
         # Create grid shape
         i = 0
         for ix in range(shape['xMin'], shape['xMax']):
@@ -292,7 +290,7 @@ class Space3M:
                     for it in range(shape['tMin'], shape['tMax']):
                         
                         grid = {'x':ix, 'y':iy, 'z':iz, 't':it}
-                        cell = self.addCellByGrid(grid)
+                        self.addCellByGrid(grid)
                         i   += 1
         
         journal.O( 'Space3M {} created {} cells'.format(self.name, str(i)), 10)
@@ -349,7 +347,13 @@ class Space3M:
         "Create and return numpy arrays for plotting from active dictionary"
         
         # Metadata section
-        meta = { 'x'     :{'dim':'m'      , 'unit':'', 'coeff':1},
+        meta = { 
+                 'gx'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['xMin'], 'max':self.shape['xMax']},
+                 'gy'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['yMin'], 'max':self.shape['yMax']},
+                 'gz'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['zMin'], 'max':self.shape['zMax']},
+                 'gt'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['tMin'], 'max':self.shape['tMax']},
+                 
+                 'x'     :{'dim':'m'      , 'unit':'', 'coeff':1},
                  'y'     :{'dim':'m'      , 'unit':'', 'coeff':1},
                  'z'     :{'dim':'m'      , 'unit':'', 'coeff':1},
                  't'     :{'dim':'s'      , 'unit':'', 'coeff':1},
@@ -357,18 +361,30 @@ class Space3M:
                  'phi'   :{'dim':'rad'    , 'unit':'', 'coeff':1},
                  'reDs'  :{'dim':'m.re'   , 'unit':'', 'coeff':1},
                  'imDs'  :{'dim':'m.im'   , 'unit':'', 'coeff':1},
+                 'abDs'  :{'dim':'m'      , 'unit':'', 'coeff':1},
                  
                  'reAmp' :{'dim':'Amp.re' , 'unit':'', 'coeff':1},
-                 'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1}  }
+                 'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1},  
+                 'abAmp' :{'dim':'Amp'    , 'unit':'', 'coeff':1}  
+               }
         
         # Data section
-        data = {'x':[], 'y':[], 'z':[], 't':[], 'phi':[],
-                'reDs' :[], 'imDs' :[],
-                'reAmp':[], 'imAmp':[]  }
+        data = {'gx':[], 'gy':[], 'gz':[], 'gt':[], 
+                'x' :[], 'y' :[], 'z' :[], 't' :[], 'phi':[],
+                'reDs' :[], 'imDs' :[], 'abDs' :[],
+                'reAmp':[], 'imAmp':[], 'abAmp':[]  }
         
         toret = { 'meta':meta, 'data':data }
         
-        for cell in self.act.values():
+        i = 0
+        for id, cell in self.act.items():
+            
+            rec  = self.getIdStruct(id)
+            
+            toret['data']['gx'   ].append(     int(rec['x'   ])      )
+            toret['data']['gy'   ].append(     int(rec['y'   ])      )
+            toret['data']['gz'   ].append(     int(rec['z'   ])      )
+            toret['data']['gt'   ].append(     int(rec['t'   ])      )
             
             toret['data']['x'    ].append( cell['pos']['x'   ]       )
             toret['data']['y'    ].append( cell['pos']['y'   ]       )
@@ -378,16 +394,18 @@ class Space3M:
             toret['data']['phi'  ].append( cell['val']['phi' ]       )
             toret['data']['reDs' ].append( cell['val']['cDs' ].real  )
             toret['data']['imDs' ].append( cell['val']['cDs' ].imag  )
+            toret['data']['abDs' ].append( abs(cell['val']['cDs'])   )
             
             toret['data']['reAmp'].append( cell['val']['cAmp'].real  )
             toret['data']['imAmp'].append( cell['val']['cAmp'].imag  )
+            toret['data']['abAmp'].append( abs(cell['val']['cAmp'])  )
+            i +=1
         
-        journal.M( 'Space3M {} getPlotData'.format(self.name), 10)
-        
+        journal.M( 'Space3M {} getPlotData created {} records'.format(self.name, i), 10)
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.30')
+print('Minkowski space class ver 0.33')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

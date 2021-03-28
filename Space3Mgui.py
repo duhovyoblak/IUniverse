@@ -33,10 +33,10 @@ _BTN_DIS_W      = 0.1
 _BTN_DIS_H      = 0.03
 
 _BTN_AXE_W      = 0.81
-_BTN_AXE_H      = 0.05
+_BTN_AXE_H      = 0.04
 
 _BTN_VAL_W      = 0.81
-_BTN_VAL_H      = 0.15
+_BTN_VAL_H      = 0.14
 
 #==============================================================================
 # class Space3Mgui
@@ -60,16 +60,20 @@ class Space3Mgui:
         self.axes    = {1:'Scatter', 2:'Quiver', 3:'3D projection'}
         self.actAxe  = 1
         
-        self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'phi', 6:'reDs', 7:'imDs', 8:'reAmp', 9:'imAmp'}
+        self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'phi', 6:'reDs', 7:'imDs', 8:'abDs', 9:'reAmp', 10:'imAmp', 11:'abAmp'}
+
         self.actValX = 1
         self.actValY = 4
         self.actValU = 8
         self.actValV = 9
         
+        self.setActValS()
+        
+        #----------------------------------------------------------------------
+        # Ziskanie realnych dat na zobrazenie z podkladoveho priestoru
         dat  = self.space3M.getPlotData()
         self.meta    = dat['meta']
         self.data    = dat['data']
-        
         self.reUnit()
         
         #----------------------------------------------------------------------
@@ -137,7 +141,7 @@ class Space3Mgui:
 
         for i, val in self.values.items():
             self.butU = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapU, value=i, command=self.onButValU)
-            self.butU.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + (i+10) * _BTN_DIS_H))
+            self.butU.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + (i+12) * _BTN_DIS_H))
 
         #----------------------------------------------------------------------
         # Value buttons V setup
@@ -146,15 +150,17 @@ class Space3Mgui:
 
         for i, val in self.values.items():
             self.butV = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapV, value=i, command=self.onButValV)
-            self.butV.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + (i+10) * _BTN_DIS_H))
+            self.butV.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + (i+12) * _BTN_DIS_H))
 
         #----------------------------------------------------------------------
-        # Sliders setup
+        # Slider for slider axis Z setup
         
-        self.g = 9.8
-        self.g_slider = tk.Scale(win, from_=0.0, to=20.0, resolution=0.1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.on_gSlider, label="g")
-        self.g_slider.place(x=self.w * 0.81, y=self.h * 0.9)
-        self.g_slider.set(9.8)
+        sMin = self.meta['g'+self.values[self.actValS]]['min']
+        sMax = self.meta['g'+self.values[self.actValS]]['max']
+        
+        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Slice data with value:")
+        self.sldS.place(x=self.w * 0.81, y=self.h * 0.9)
+        self.sVal = 0
         
         #----------------------------------------------------------------------
         # Initialisation
@@ -163,6 +169,11 @@ class Space3Mgui:
         journal.O( 'Space3Mgui created for space {}'.format(self.title), 10 )
 
         win.mainloop()       # Start listening for events
+
+    #--------------------------------------------------------------------------
+    def sliderSetup(self):
+
+        self.g = 9.8
 
     #==========================================================================
     # Tools for figure setting
@@ -202,6 +213,58 @@ class Space3Mgui:
         
         return "${}$ [{}{}]".format(key, self.meta[key]['unit'], 
                                          self.meta[key]['dim' ])
+    #--------------------------------------------------------------------------
+    def setActValS(self):
+        "Choose hidden variable for slider axis for given actX and actY"
+        
+        self.actValS = 2
+
+        lst = [1, 2, 4]
+        
+        try   :lst.remove(self.actValX)
+        except: pass
+    
+        try   :lst.remove(self.actValY)
+        except: pass
+        
+        try   : lst.remove(self.actValU)
+        except: pass
+
+        self.actValS = lst[0]
+
+        journal.M( 'Space3Mgui {} setActValS choose for X={}, Y={}, U={} slider value S = {}'.format(self.title, self.actValX, self.actValY, self.actValU, self.actValS), 10 )
+        
+    #--------------------------------------------------------------------------
+    def getDataSlice(self):
+        "Return a slice of data for given actValS"
+        
+        sDim = 'g' + self.values[self.actValS]
+        sCut = self.sVal
+        
+        x = []
+        y = []
+        u = []
+        v = []
+
+        i = 0
+        for vs in self.data[sDim]:
+            
+            if vs == sCut:
+                x.append( self.data[self.values[self.actValX]][i] )
+                y.append( self.data[self.values[self.actValY]][i] )
+                u.append( self.data[self.values[self.actValU]][i] )
+                v.append( self.data[self.values[self.actValV]][i] )
+                
+            i += 1
+        
+        X = np.array(x)
+        Y = np.array(y)
+        U = np.array(u)
+        V = np.array(v)
+
+        journal.M( "Space3Mgui {} getDataSlice return {} data points for Dim='{}' with cut={}".format(self.title, len(x), sDim, sCut), 10 )
+        
+        return (X, Y, U, V)
         
     #==========================================================================
     # GUI methods
@@ -215,17 +278,16 @@ class Space3Mgui:
         
         # Odstranenie stareho grafu
         self.ax.remove()
+        
+        # Doplnenie 3-tej suradnice a nastavenie slider-u
+        self.setActValS()
+        self.sliderSetup()
 
-        # Ziskanie nastavenia grafu
         valX = self.values[self.actValX]
         valY = self.values[self.actValY]
-        valU = self.values[self.actValU]
-        valV = self.values[self.actValV]
 
-        X = np.array(self.data[valX])
-        Y = np.array(self.data[valY])
-        U = np.array(self.data[valU])
-        V = np.array(self.data[valV])
+        # Vytvorenie rezu udajov na zobrazenie
+        (X, Y, U, V) = self.getDataSlice()
     
         # Priprava noveho grafu
         if self.actAxe == 1:
@@ -298,10 +360,10 @@ class Space3Mgui:
         self.show()
     
     #--------------------------------------------------------------------------
-    def on_gSlider(self, new_val=1.0):
-        "Resolve change of g-Slider"
+    def onSlider(self, new_val):
+        "Resolve change of Slider"
 
-        self.g   = new_val  # same as self.g_slider.get()
+        self.sVal = self.sldS.get()
         self.show()
     
     #--------------------------------------------------------------------------
@@ -312,10 +374,14 @@ class Space3Mgui:
             
             x = float(event.xdata)
             y = float(event.ydata)
+
+            # Ziskanie nastavenia grafu
+            valX = self.values[self.actValX]
+            valY = self.values[self.actValY]
             
-            x = x / self.meta['x']['coeff']
-            y = y / self.meta['t']['coeff']
-            
+            x = x / self.meta[valX]['coeff']
+            y = y / self.meta[valY]['coeff']
+
             id = self.space3M.getIdFromPos({'x':x, 'y':0, 'z':0, 't':y})
             
             self.space3M.printCell(id)
@@ -326,7 +392,7 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
-print('Minkowski space class GUI ver 0.30')
+print('Minkowski space class GUI ver 0.33')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------
