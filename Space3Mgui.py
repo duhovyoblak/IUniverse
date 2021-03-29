@@ -274,10 +274,9 @@ class Space3Mgui:
         
         journal.I( 'Space3Mgui {} show {}'.format(self.title, self.axes[self.actAxe]), 10 )
         
-        self.ax3 = self.fig.add_subplot(1,2,2, projection='3d')
-        
         # Odstranenie stareho grafu
-        self.ax.remove()
+#        self.ax.remove()
+        while len(self.fig.axes)>0: self.fig.axes[0].remove()
         
         # Doplnenie 3-tej suradnice a nastavenie slider-u
         self.setActValS()
@@ -293,12 +292,13 @@ class Space3Mgui:
         if self.actAxe == 1:
             
             self.ax = self.fig.add_subplot(1,1,1)
-            self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
+            self.ax.set_title("{}".format( self.axes[self.actAxe]), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
             
-            self.ax.scatter( X, Y, U, cmap='RdYlGn')
+            sctr = self.ax.scatter( X, Y, U, cmap='RdYlGn')
+            self.fig.colorbar(sctr, ax=self.ax)
             
         elif self.actAxe == 2:
             
@@ -316,7 +316,8 @@ class Space3Mgui:
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
-            self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlGn', antialiased=False)
+            surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlGn', antialiased=False)
+#            self.fig.colorbar(surf, ax=self.ax)
         
         # Vykreslenie noveho grafu
         self.fig.tight_layout()
