@@ -120,10 +120,11 @@ class Space3Mgui:
         self.butValMapX = tk.IntVar()
         
         for i, val in self.values.items():
-            self.butReDs = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapX, value=i, command=self.onButValX)
-            self.butReDs.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
+            self.butX = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapX, value=i, command=self.onButValX)
+            self.butX.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
 
-        self.butReDs.select()
+        self.butX.select()
+        self.butValMapX.set(self.actValX)
         
         #----------------------------------------------------------------------
         # Value buttons Y setup
@@ -134,6 +135,9 @@ class Space3Mgui:
             self.butY = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapY, value=i, command=self.onButValY)
             self.butY.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + i * _BTN_DIS_H))
 
+        self.butY.select()
+        self.butValMapY.set(self.actValY)
+
         #----------------------------------------------------------------------
         # Value buttons U setup
         
@@ -142,6 +146,9 @@ class Space3Mgui:
         for i, val in self.values.items():
             self.butU = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapU, value=i, command=self.onButValU)
             self.butU.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + (i+12) * _BTN_DIS_H))
+
+        self.butU.select()
+        self.butValMapU.set(self.actValU)
 
         #----------------------------------------------------------------------
         # Value buttons V setup
@@ -152,15 +159,24 @@ class Space3Mgui:
             self.butV = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapV, value=i, command=self.onButValV)
             self.butV.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + (i+12) * _BTN_DIS_H))
 
+        self.butV.select()
+        self.butValMapV.set(self.actValV)
+
         #----------------------------------------------------------------------
         # Slider for slider axis Z setup
         
         sMin = self.meta['g'+self.values[self.actValS]]['min']
         sMax = self.meta['g'+self.values[self.actValS]]['max']
         
-        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Slice data with value:")
+        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Data are sliced by:")
         self.sldS.place(x=self.w * 0.81, y=self.h * 0.9)
         self.sVal = 0
+        
+        self.sLabMap = tk.StringVar()
+        self.sLab = tk.Label(win, textvariable = self.sLabMap)
+        self.sLab.place(x=self.w * 0.92, y=self.h * 0.9)
+        
+        self.sLabMap.set("Test")
         
         #----------------------------------------------------------------------
         # Initialisation
@@ -173,8 +189,8 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
     def sliderSetup(self):
 
-        self.g = 9.8
-
+        self.sLabMap.set("Dim {}".format(self.values[self.actValS]) )
+    
     #==========================================================================
     # Tools for figure setting
     #--------------------------------------------------------------------------
@@ -241,28 +257,42 @@ class Space3Mgui:
         sDim = 'g' + self.values[self.actValS]
         sCut = self.sVal
         
+        journal.I( "Space3Mgui {} getDataSlice will use Dim='{}' with cut={}".format(self.title, sDim, sCut), 10 )
+
         x = []
         y = []
         u = []
         v = []
 
+        xDim = self.values[self.actValX]
+        yDim = self.values[self.actValY]
+        uDim = self.values[self.actValU]
+        vDim = self.values[self.actValV]
+
         i = 0
-        for vs in self.data[sDim]:
+        for sValue in self.data[sDim]:
             
-            if vs == sCut:
-                x.append( self.data[self.values[self.actValX]][i] )
-                y.append( self.data[self.values[self.actValY]][i] )
-                u.append( self.data[self.values[self.actValU]][i] )
-                v.append( self.data[self.values[self.actValV]][i] )
-                
+            if sValue == sCut:
+                x.append( self.data[xDim][i] )
+                y.append( self.data[yDim][i] )
+                u.append( self.data[uDim][i] )
+                v.append( self.data[vDim][i] )
             i += 1
         
         X = np.array(x)
-        Y = np.array(y)
-        U = np.array(u)
-        V = np.array(v)
+        journal.M( "Space3Mgui {} getDataSlice X dimension is {} in <{:.3}, {:.3}>".format(self.title, xDim, X.min(), X.max()), 10 )
 
-        journal.M( "Space3Mgui {} getDataSlice return {} data points for Dim='{}' with cut={}".format(self.title, len(x), sDim, sCut), 10 )
+        Y = np.array(y)
+        journal.M( "Space3Mgui {} getDataSlice Y dimension is {} in <{:.3}, {:.3}>".format(self.title, yDim, Y.min(), Y.max()), 10 )
+
+        U = np.array(u)
+        journal.M( "Space3Mgui {} getDataSlice U dimension is {} in <{:.3}, {:.3}>".format(self.title, uDim, U.min(), U.max()), 10 )
+
+        V = np.array(v)
+        journal.M( "Space3Mgui {} getDataSlice V dimension is {} in <{:.3}, {:.3}>".format(self.title, vDim, V.min(), V.max()), 10 )
+
+
+        journal.O( "Space3Mgui {} getDataSlice return 4 x {} data points".format(self.title, len(x)), 10 )
         
         return (X, Y, U, V)
         
@@ -278,17 +308,17 @@ class Space3Mgui:
 #        self.ax.remove()
         while len(self.fig.axes)>0: self.fig.axes[0].remove()
         
-        # Doplnenie 3-tej suradnice a nastavenie slider-u
+        # Rozhodnutie o slider dimezii
         self.setActValS()
-        self.sliderSetup()
-
-        valX = self.values[self.actValX]
-        valY = self.values[self.actValY]
 
         # Vytvorenie rezu udajov na zobrazenie
         (X, Y, U, V) = self.getDataSlice()
     
         # Priprava noveho grafu
+        self.sliderSetup()
+        valX = self.values[self.actValX]
+        valY = self.values[self.actValY]
+
         if self.actAxe == 1:
             
             self.ax = self.fig.add_subplot(1,1,1)
@@ -297,7 +327,7 @@ class Space3Mgui:
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
             
-            sctr = self.ax.scatter( X, Y, U, cmap='RdYlGn')
+            sctr = self.ax.scatter( x=X, y=Y, c=U, cmap='RdYlBu_r')
             self.fig.colorbar(sctr, ax=self.ax)
             
         elif self.actAxe == 2:
@@ -316,8 +346,8 @@ class Space3Mgui:
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
-            surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlGn', antialiased=False)
-#            self.fig.colorbar(surf, ax=self.ax)
+            surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlBu_r', antialiased=False)
+            self.fig.colorbar(surf, ax=self.ax)
         
         # Vykreslenie noveho grafu
         self.fig.tight_layout()
@@ -393,7 +423,7 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
-print('Minkowski space class GUI ver 0.33')
+print('Minkowski space class GUI ver 0.34')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

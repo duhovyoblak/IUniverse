@@ -30,9 +30,9 @@ if __name__ =='__main__':
     
     p = PartCommon( 'p1', {'x':-1, 'y':0, 'z':0, 't':0},  510998.950 )
     p.setLambda(3)
-#    st.addPart(p)
+    st.addPart(p)
 
-    r = PartCommon( 'p2', {'x':0, 'y':0, 'z':0, 't':0},  510998.950 )
+    r = PartCommon( 'p2', {'x':1, 'y':0, 'z':0, 't':0},  510998.950 )
     r.setLambda(3)
     st.addPart(r)
 
