@@ -29,14 +29,14 @@ _DPI            = 100
 _FIG_W          = 0.8
 _FIG_H          = 1.0
 
-_BTN_DIS_W      = 0.1
-_BTN_DIS_H      = 0.03
-
 _BTN_AXE_W      = 0.81
-_BTN_AXE_H      = 0.04
+_BTN_AXE_H      = 0.03
 
 _BTN_VAL_W      = 0.81
-_BTN_VAL_H      = 0.14
+_BTN_VAL_H      = 0.10
+
+_BTN_DIS_W      = 0.1
+_BTN_DIS_H      = 0.025
 
 #==============================================================================
 # class Space3Mgui
@@ -60,12 +60,15 @@ class Space3Mgui:
         self.axes    = {1:'Scatter', 2:'Quiver', 3:'3D projection'}
         self.actAxe  = 1
         
-        self.values  = {1:'x', 2:'y', 3:'z', 4:'t', 5:'phi', 6:'reDs', 7:'imDs', 8:'abDs', 9:'reAmp', 10:'imAmp', 11:'abAmp'}
+        self.values  = { 1:'x',      2:'y',      3:'z',    4:'t', 
+                         5:'reDs',   6:'imDs',   7:'abDs', 8:'phi', 
+                         9:'reDt',  10:'imDt',  11:'abDt', 
+                        12:'reAmp', 13:'imAmp', 14:'abAmp'}
 
         self.actValX = 1
         self.actValY = 4
-        self.actValU = 8
-        self.actValV = 9
+        self.actValU = 7
+        self.actValV = 11
         
         self.setActValS()
         
@@ -145,7 +148,7 @@ class Space3Mgui:
 
         for i, val in self.values.items():
             self.butU = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapU, value=i, command=self.onButValU)
-            self.butU.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + (i+12) * _BTN_DIS_H))
+            self.butU.place(x=self.w * _BTN_VAL_W, y = self.h * (_BTN_VAL_H + (i+15) * _BTN_DIS_H))
 
         self.butU.select()
         self.butValMapU.set(self.actValU)
@@ -157,7 +160,7 @@ class Space3Mgui:
 
         for i, val in self.values.items():
             self.butV = tk.Radiobutton(win, text="{} [{}]".format(val, self.meta[val]['dim']), variable=self.butValMapV, value=i, command=self.onButValV)
-            self.butV.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + (i+12) * _BTN_DIS_H))
+            self.butV.place(x=self.w * (_BTN_VAL_W + _BTN_DIS_W), y = self.h * (_BTN_VAL_H + (i+15) * _BTN_DIS_H))
 
         self.butV.select()
         self.butValMapV.set(self.actValV)
@@ -412,6 +415,8 @@ class Space3Mgui:
             
             x = x / self.meta[valX]['coeff']
             y = y / self.meta[valY]['coeff']
+            
+            # TU ESTE CHYBA INFO ZO SLIDER-A !
 
             id = self.space3M.getIdFromPos({'x':x, 'y':0, 'z':0, 't':y})
             

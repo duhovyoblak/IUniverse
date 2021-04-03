@@ -11,7 +11,7 @@
 #------------------------------------------------------------------------------
 from siqo_lib import journal
 
-
+from abc      import ABC, abstractmethod
 from math     import sqrt, exp
 
 
@@ -43,7 +43,7 @@ _MR_E           = 0.510998950002e6     # rest mass of electron in [eV/c2]
 #==============================================================================
 # class PartCommon
 #------------------------------------------------------------------------------
-class PartCommon:
+class PartCommon(ABC):
 
     #==========================================================================
     # Constructor & utilities
@@ -154,9 +154,9 @@ class PartCommon:
     def getWaveVec(self):
         "Return wave vector in [2Pi/m], kx = ky = kz = k"
         
-        k = self.getWaveNum()
+        # THIS MUST BE RE-DEFINED IN INHERITED CLASS !
         
-        return {'x':k, 'y':k, 'z':k}
+        return {'x':0, 'y':0, 'z':0}
     
     #==========================================================================
     # Information wave properties
@@ -166,23 +166,13 @@ class PartCommon:
     #==========================================================================
     # Tools for Space 
     #--------------------------------------------------------------------------
-    def toSpace(self, space, pos='nil'):
-        "Write particle to Minkowski space"
+    @abstractmethod
+    def getPhi(self, dPos):
+        "Return angle Phi for particle and given interval in Minkowski space"
         
-        journal.I( 'PartCommon {} toSpace...'.format(self.name), 10)
+        # THIS MUST BE RE-DEFINED IN INHERITED CLASS !
         
-        if pos!='nil': self.pos = pos
-        
-        for cell in space.act.values():
-            
-            pos = cell['pos']
-            val = cell['val']
-            
-            val['phi'] = space.getDPos(self.pos, pos)
-            
-
-        
-        journal.O( 'PartCommon {} toSpace done'.format(self.name), 10)
+        return 1/0
 
     #==========================================================================
     # Tools for data extraction & persistency

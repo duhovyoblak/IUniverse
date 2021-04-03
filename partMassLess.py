@@ -72,23 +72,12 @@ class PartMassLess(PartCommon):
     #==========================================================================
     # Tools for Space 
     #--------------------------------------------------------------------------
-    def toSpace(self, space, pos='nil'):
-        "Write particle to Minkowski space"
+    def getPhi(self, dPos):
+        "Return angle Phi for particle and given interval in Minkowski space"
         
-        journal.I( 'PartMassLess {} toSpace...'.format(self.name), 10)
+        rdt = dPos['dt'] - dPos['dr'] / _C
         
-        if pos!='nil': self.pos = pos
-        
-        for cell in space.act.values():
-            
-            pos = cell['pos']
-            val = cell['val']
-            
-            val['phi'] = space.getDPos(self.pos, pos)
-            
-
-        
-        journal.O( 'PartMassLess {} toSpace done'.format(self.name), 10)
+        return self.getOmega() * rdt
 
     #==========================================================================
     # Tools for data extraction & persistency
@@ -111,7 +100,7 @@ class PartMassLess(PartCommon):
         return toret
         
 #------------------------------------------------------------------------------
-print('PartMassLess class ver 0.10')
+print('PartMassLess class ver 0.11')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

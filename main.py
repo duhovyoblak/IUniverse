@@ -1,10 +1,10 @@
 #==============================================================================
 # :main file
 #------------------------------------------------------------------------------
-from siqo_lib    import journal
-from space3M     import Space3M
-from space3Mgui  import Space3Mgui
-from partCommon  import PartCommon
+from siqo_lib      import journal
+from space3M       import Space3M
+from space3Mgui    import Space3Mgui
+from partMassLess  import PartMassLess
 
 #==============================================================================
 # package's constants
@@ -28,11 +28,11 @@ if __name__ =='__main__':
     st = Space3M('test')
     st.createSpace( {'xMin':-20, 'xMax':20, 'yMin':-20, 'yMax':20, 'zMin':0, 'zMax':1, 'tMin':-10, 'tMax':30 }, 0.2 )
     
-    p = PartCommon( 'p1', {'x':-1, 'y':0, 'z':0, 't':0},  510998.950 )
+    p = PartMassLess( 'p1', {'x':0, 'y':0, 'z':0, 't':0},  510998.950 )
     p.setLambda(3)
     st.addPart(p)
 
-    r = PartCommon( 'p2', {'x':1, 'y':0, 'z':0, 't':0},  510998.950 )
+    r = PartMassLess( 'p2', {'x':1, 'y':0, 'z':0, 't':0},  510998.950 )
     r.setLambda(3)
     st.addPart(r)
 

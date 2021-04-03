@@ -140,10 +140,12 @@ class Space3M:
         dz = pb['z']-pa['z']
         dt = pb['t']-pa['t']
         
-        dt2 = _C2*dt*dt
-        dl2 = dx*dx + dy*dy +dz*dz
+        dt2 = dt*dt
+        dr2 = dx*dx + dy*dy +dz*dz
         
-        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'ds':cm.sqrt(dt2-dl2) }
+        return { 'dx' :dx,  'dy':dy, 'dz':dz, 'dt':dt, 
+                 'dr2':dr2, 'dr':sqrt(dr2),  'dt2':dt2, 
+                 'cDs':cm.sqrt(dr2 - _C2*dt2), 'cDt':cm.sqrt(dt2 - dr2/_C2) }
         
     #--------------------------------------------------------------------------
     def getGridInt(self, ga, gb):
@@ -154,7 +156,7 @@ class Space3M:
         dz = gb['z']-ga['z']
         dt = gb['t']-ga['t']
         
-        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'int':sqrt(dx*dx + dy*dy +dz*dz + dt*dt)}
+        return { 'dx':dx, 'dy':dy, 'dz':dz, 'dt':dt, 'dG':sqrt(dx*dx + dy*dy +dz*dz + dt*dt)}
 
     #==========================================================================
     # Tools for cell's selecting, creating & editing
@@ -197,10 +199,10 @@ class Space3M:
         
         pos  = self.getPos(grid)
         id   = self.getIdFromGrid(grid)
-        dInt = self.getPosInt(0, pos)
+        dPos = self.getPosInt(0, pos)
         
         cell = {'pos': pos, 
-                'val': { 'cDs':dInt['ds'], 'phi':0, 'cAmp':complex(0,0) },
+                'val': { 'cDs':dPos['cDs'], 'cDt':dPos['cDt'], 'phi':dPos['dt']-sqrt(dPos['dr2']), 'cAmp':complex(0,0) },
                 'opt': opt }
 
         self.act[id] = cell
@@ -250,7 +252,12 @@ class Space3M:
         
         try: 
             cell = self.act[id]
-            print( id, cell['pos'], cell['val'], cell['opt'] )
+            p = cell['pos']
+            v = cell['val']
+            
+            print( "Cell ID = {}".format(id) )
+            print( "  x = {:e},                 y = {:e},                 z = {:e}, t = {:e}".format(p['x'], p['y'], p['z'] ,p['t']) )
+            print( "cDs = {:e}, cDt = {:e}, phi = {:e}".format( v['cDs'], v['cDt'], v['phi'] ) )
         
         except KeyError:
             journal.M( "Space3M {} can't print cell ID = {}. No such cell".format(self.name, id), 9)
@@ -299,21 +306,19 @@ class Space3M:
     def partToSpace(self, part ):
         "Append phi for given particle for every ID in the Space"
         
-        om = part.getOmega()
-        kv = part.getWaveVec()
-        pp = part.getPos()
+        partPos = part.getPos()
         
+        i=0
         for cell in self.act.values():
             
-            dP  = self.getPosInt( pp, cell['pos'] )
-            phi = om*dP['dt'] - abs( kv['x']*dP['dx'] + kv['y']*dP['dy'] + kv['z']*dP['dz'] )
-            
-#            cell['val']['phi'] += phi
+            dPos = self.getPosInt( partPos, cell['pos'] )
+            phi  = part.getPhi(dPos)
             cAmp = cm.exp(complex(0,phi))
             
             cell['val']['cAmp'] = cell['val']['cAmp'] + cAmp
+            i += 1
 
-        journal.M( 'Space3M {} partToSpace for {}'.format(self.name, part.getName()), 10)
+        journal.M( 'Space3M {} partToSpace for {} applied for {} cells'.format(self.name, part.getName(), i), 10)
 
     #--------------------------------------------------------------------------
     def partsUp(self):
@@ -358,10 +363,15 @@ class Space3M:
                  'z'     :{'dim':'m'      , 'unit':'', 'coeff':1},
                  't'     :{'dim':'s'      , 'unit':'', 'coeff':1},
                  
-                 'phi'   :{'dim':'rad'    , 'unit':'', 'coeff':1},
                  'reDs'  :{'dim':'m.re'   , 'unit':'', 'coeff':1},
                  'imDs'  :{'dim':'m.im'   , 'unit':'', 'coeff':1},
                  'abDs'  :{'dim':'m'      , 'unit':'', 'coeff':1},
+
+                 'phi'   :{'dim':'rad'    , 'unit':'', 'coeff':1},
+
+                 'reDt'  :{'dim':'s.re'   , 'unit':'', 'coeff':1},
+                 'imDt'  :{'dim':'s.im'   , 'unit':'', 'coeff':1},
+                 'abDt'  :{'dim':'s'      , 'unit':'', 'coeff':1},
                  
                  'reAmp' :{'dim':'Amp.re' , 'unit':'', 'coeff':1},
                  'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1},  
@@ -369,8 +379,10 @@ class Space3M:
                }
         
         # Data section
-        data = {'gx':[], 'gy':[], 'gz':[], 'gt':[], 
-                'x' :[], 'y' :[], 'z' :[], 't' :[], 'phi':[],
+        data = {'gx'   :[], 'gy'   :[],    'gz':[], 'gt':[], 
+                'x'    :[], 'y'    :[],    'z' :[], 't' :[], 
+                'reDt' :[], 'imDt' :[], 'abDt' :[],
+                'phi'  :[],
                 'reDs' :[], 'imDs' :[], 'abDs' :[],
                 'reAmp':[], 'imAmp':[], 'abAmp':[]  }
         
@@ -391,10 +403,15 @@ class Space3M:
             toret['data']['z'    ].append( cell['pos']['z'   ]       )
             toret['data']['t'    ].append( cell['pos']['t'   ]       )
             
-            toret['data']['phi'  ].append( cell['val']['phi' ]       )
             toret['data']['reDs' ].append( cell['val']['cDs' ].real  )
             toret['data']['imDs' ].append( cell['val']['cDs' ].imag  )
             toret['data']['abDs' ].append( abs(cell['val']['cDs'])   )
+
+            toret['data']['phi'  ].append( cell['val']['phi' ]       )
+
+            toret['data']['reDt' ].append( cell['val']['cDt' ].real  )
+            toret['data']['imDt' ].append( cell['val']['cDt' ].imag  )
+            toret['data']['abDt' ].append( abs(cell['val']['cDt'])   )
             
             toret['data']['reAmp'].append( cell['val']['cAmp'].real  )
             toret['data']['imAmp'].append( cell['val']['cAmp'].imag  )
@@ -405,7 +422,7 @@ class Space3M:
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.33')
+print('Minkowski space class ver 0.34')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------
