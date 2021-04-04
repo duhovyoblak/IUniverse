@@ -9,27 +9,15 @@
 #    phs means phi mod 2*PI in radians
 #
 #------------------------------------------------------------------------------
-from siqo_lib import journal
+from siqo_lib      import journal
+from iuniverse_lib import _ERR, _C, _C2
 
-from math     import sqrt, exp, sin, cos
-import cmath as cm
+from math          import sqrt, exp, sin, cos
+import cmath       as cm
 
 #==============================================================================
 # package's constants
 #------------------------------------------------------------------------------
-
-_ERR            = '_ERROR_'
-
-_PI             = 3.141592653589793    # Pi number
-_2PI            = 6.283185307179586
-_SQRT_2PI       = 2.5066282746310002
-_REV_SQRT_2PI   = 0.3989422804014327
-
-_E              = 2.718281828459045    # Euler number
-_H              = 6.62607015e-34       # Planck quantum in [Joule*second]
-_H_RED          = _H / _2PI            # Reduced Planck quantum
-_C              = 299792458            # speed of light in [meter/second]
-_C2             = _C * _C              # speed of light square
 
 #==============================================================================
 # package's tools

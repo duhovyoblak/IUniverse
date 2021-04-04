@@ -13,7 +13,7 @@ from siqo_lib import journal
 
 #from matplotlib.figure                 import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from mpl_toolkits                      import mplot3d
+#from mpl_toolkits                      import mplot3d
 
 import numpy             as np
 import matplotlib.pyplot as plt
@@ -24,10 +24,12 @@ import tkinter           as tk
 #------------------------------------------------------------------------------
 
 _WIN            = '1680x1050'
-#_WIN            = '1280x1000'
 _DPI            = 100
+
 _FIG_W          = 0.8
 _FIG_H          = 1.0
+
+_SC_RED         = 1.4
 
 _BTN_AXE_W      = 0.81
 _BTN_AXE_H      = 0.03
@@ -349,6 +351,14 @@ class Space3Mgui:
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
+            
+            vMax = U.max() * _SC_RED
+            vMin = U.min()
+            if vMin*vMax > 0: vMin = vMin / _SC_RED
+            else            : vMin = vMin * _SC_RED
+            
+            self.ax.set_zlim(vMin, vMax)
+            
             surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlBu_r', antialiased=False)
             self.fig.colorbar(surf, ax=self.ax)
         
