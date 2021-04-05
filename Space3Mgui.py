@@ -13,7 +13,7 @@ from siqo_lib import journal
 
 #from matplotlib.figure                 import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#from mpl_toolkits                      import mplot3d
+from mpl_toolkits                      import mplot3d
 
 import numpy             as np
 import matplotlib.pyplot as plt
@@ -79,7 +79,7 @@ class Space3Mgui:
         dat  = self.space3M.getPlotData()
         self.meta    = dat['meta']
         self.data    = dat['data']
-        self.reUnit()
+        self.reScale()
         
         #----------------------------------------------------------------------
         # Create output window
@@ -173,13 +173,13 @@ class Space3Mgui:
         sMin = self.meta['g'+self.values[self.actValS]]['min']
         sMax = self.meta['g'+self.values[self.actValS]]['max']
         
-        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Data are sliced by:")
+        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Data are sliced by ")
         self.sldS.place(x=self.w * 0.81, y=self.h * 0.9)
         self.sVal = 0
         
         self.sLabMap = tk.StringVar()
         self.sLab = tk.Label(win, textvariable = self.sLabMap)
-        self.sLab.place(x=self.w * 0.92, y=self.h * 0.9)
+        self.sLab.place(x=self.w * 0.89, y=self.h * 0.9)
         
         self.sLabMap.set("Test")
         
@@ -194,15 +194,19 @@ class Space3Mgui:
     #--------------------------------------------------------------------------
     def sliderSetup(self):
 
-        self.sLabMap.set("Dim {}".format(self.values[self.actValS]) )
+        gv  = self.sVal
+        key = self.values[self.actValS]
+        v   = self.getValByGrid(gv, key)
+        
+        self.sLabMap.set("dim '{}' with value {:.3f}".format(key, v) )
     
     #==========================================================================
     # Tools for figure setting
     #--------------------------------------------------------------------------
-    def reUnit(self):
+    def reScale(self):
         "Re-scale all data vectors for better understability"
         
-        journal.I( 'Space3Mgui {} reUnit...'.format(self.title), 10 )
+        journal.I( 'Space3Mgui {} reScale...'.format(self.title), 10 )
         for key, lst in self.data.items():
             
             pL = list(lst)  # Urobim si kopiu listu na pokusy :-)
@@ -226,7 +230,7 @@ class Space3Mgui:
             
             journal.M( 'Space3Mgui {} Data list {} was re-scaled by {:e} with preposition {}'.format(self.title, key, c[1], c[0]), 10 )
                 
-        journal.O( 'Space3Mgui {} reUnit done'.format(self.title), 10 )
+        journal.O( 'Space3Mgui {} reScale done'.format(self.title), 10 )
     
     #--------------------------------------------------------------------------
     def getDataLabel(self, key):
@@ -234,6 +238,16 @@ class Space3Mgui:
         
         return "${}$ [{}{}]".format(key, self.meta[key]['unit'], 
                                          self.meta[key]['dim' ])
+    
+    #--------------------------------------------------------------------------
+    def getValByGrid(self, gv, key):
+        "Return rescaled value for given grid's value and data's key"
+        
+        gl = self.meta['g'+key]['max'] - self.meta['g'+key]['min']
+        vl = self.meta[    key]['max'] - self.meta[    key]['min']
+        
+        return (gv/gl) * vl * self.meta[key]['coeff']
+    
     #--------------------------------------------------------------------------
     def setActValS(self):
         "Choose hidden variable for slider axis for given actX and actY"
@@ -309,8 +323,7 @@ class Space3Mgui:
         
         journal.I( 'Space3Mgui {} show {}'.format(self.title, self.axes[self.actAxe]), 10 )
         
-        # Odstranenie stareho grafu
-#        self.ax.remove()
+        # Odstranenie vsetkych axes
         while len(self.fig.axes)>0: self.fig.axes[0].remove()
         
         # Rozhodnutie o slider dimezii
@@ -319,7 +332,7 @@ class Space3Mgui:
         # Vytvorenie rezu udajov na zobrazenie
         (X, Y, U, V) = self.getDataSlice()
     
-        # Priprava noveho grafu
+        # Priprava novych axes
         self.sliderSetup()
         valX = self.values[self.actValX]
         valY = self.values[self.actValY]
@@ -352,11 +365,20 @@ class Space3Mgui:
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
             
-            vMax = U.max() * _SC_RED
-            vMin = U.min()
-            if vMin*vMax > 0: vMin = vMin / _SC_RED
-            else            : vMin = vMin * _SC_RED
+            # Reduction z-axis 
+            a = U.min()
+            b = U.max()
             
+            if abs(a) > abs(b): 
+                vMax = a * _SC_RED
+                vMin = b
+            else              : 
+                vMax = b * _SC_RED
+                vMin = a
+                
+            if a * b > 0: vMin = vMin / _SC_RED
+            else        : vMin = vMin * _SC_RED
+                
             self.ax.set_zlim(vMin, vMax)
             
             surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlBu_r', antialiased=False)
@@ -422,14 +444,18 @@ class Space3Mgui:
             # Ziskanie nastavenia grafu
             valX = self.values[self.actValX]
             valY = self.values[self.actValY]
+            valS = self.values[self.actValS]
             
-            x = x / self.meta[valX]['coeff']
-            y = y / self.meta[valY]['coeff']
+            x = x                                  / self.meta[valX]['coeff']
+            y = y                                  / self.meta[valY]['coeff']
+            s = self.getValByGrid(self.sVal, valS) / self.meta[valS]['coeff']
             
-            # TU ESTE CHYBA INFO ZO SLIDER-A !
-
-            id = self.space3M.getIdFromPos({'x':x, 'y':0, 'z':0, 't':y})
+            pos = {'x':0, 'y':0, 'z':0, 't':0}
+            pos[valX] = x
+            pos[valY] = y
+            pos[valS] = s
             
+            id = self.space3M.getIdFromPos(pos)
             self.space3M.printCell(id)
             
         else:

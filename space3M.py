@@ -243,6 +243,7 @@ class Space3M:
             p = cell['pos']
             v = cell['val']
             
+            print('----------------------------------------------------------------------------------------------------')
             print( "Cell ID = {}".format(id) )
             print( "  x = {:e},                 y = {:e},                 z = {:e}, t = {:e}".format(p['x'], p['y'], p['z'] ,p['t']) )
             print( "cDs = {:e}, cDt = {:e}, phi = {:e}".format( v['cDs'], v['cDt'], v['phi'] ) )
@@ -339,6 +340,7 @@ class Space3M:
     def getPlotData(self):
         "Create and return numpy arrays for plotting from active dictionary"
         
+        #----------------------------------------------------------------------
         # Metadata section
         meta = { 
                  'gx'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['xMin'], 'max':self.shape['xMax']},
@@ -346,10 +348,10 @@ class Space3M:
                  'gz'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['zMin'], 'max':self.shape['zMax']},
                  'gt'    :{'dim':'grid'   , 'unit':'', 'coeff':1, 'min':self.shape['tMin'], 'max':self.shape['tMax']},
                  
-                 'x'     :{'dim':'m'      , 'unit':'', 'coeff':1},
-                 'y'     :{'dim':'m'      , 'unit':'', 'coeff':1},
-                 'z'     :{'dim':'m'      , 'unit':'', 'coeff':1},
-                 't'     :{'dim':'s'      , 'unit':'', 'coeff':1},
+                 'x'     :{'dim':'m'      , 'unit':'', 'coeff':1, 'min':0, 'max':0 },
+                 'y'     :{'dim':'m'      , 'unit':'', 'coeff':1, 'min':0, 'max':0 },
+                 'z'     :{'dim':'m'      , 'unit':'', 'coeff':1, 'min':0, 'max':0 },
+                 't'     :{'dim':'s'      , 'unit':'', 'coeff':1, 'min':0, 'max':0 },
                  
                  'reDs'  :{'dim':'m.re'   , 'unit':'', 'coeff':1},
                  'imDs'  :{'dim':'m.im'   , 'unit':'', 'coeff':1},
@@ -366,6 +368,7 @@ class Space3M:
                  'abAmp' :{'dim':'Amp'    , 'unit':'', 'coeff':1}  
                }
         
+        #----------------------------------------------------------------------
         # Data section
         data = {'gx'   :[], 'gy'   :[],    'gz':[], 'gt':[], 
                 'x'    :[], 'y'    :[],    'z' :[], 't' :[], 
@@ -406,11 +409,32 @@ class Space3M:
             toret['data']['abAmp'].append( abs(cell['val']['cAmp'])  )
             i +=1
         
+        #----------------------------------------------------------------------
+        # Aggregation section
+        
+        pX = list(toret['data']['x'])
+        pX.sort()
+        pY = list(toret['data']['y'])
+        pY.sort()
+        pZ = list(toret['data']['z'])
+        pZ.sort()
+        pT = list(toret['data']['t'])
+        pT.sort()
+        
+        toret['meta']['x']['min'] = pX[ 0]
+        toret['meta']['x']['max'] = pX[-1]
+        toret['meta']['y']['min'] = pY[ 0]
+        toret['meta']['y']['max'] = pY[-1]
+        toret['meta']['z']['min'] = pZ[ 0]
+        toret['meta']['z']['max'] = pZ[-1]
+        toret['meta']['t']['min'] = pT[ 0]
+        toret['meta']['t']['max'] = pT[-1]
+        
         journal.M( 'Space3M {} getPlotData created {} records'.format(self.name, i), 10)
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.34')
+print('Minkowski space class ver 0.35')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------
