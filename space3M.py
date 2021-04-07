@@ -293,7 +293,7 @@ class Space3M:
 
     #--------------------------------------------------------------------------
     def partToSpace(self, part ):
-        "Append phi for given particle for every ID in the Space"
+        "Append complex amplitude for given particle for every ID in the Space"
         
         partPos = part.getPos()
         
@@ -306,6 +306,8 @@ class Space3M:
             cAmp = cm.exp(complex(0,phi))
             
             # pokles amplitudy so vzdialenostou
+#            r    = 1
+#            r    = dPos['dr' ]
             r    = abs(dPos['cDt'])
             if r < 1e-9: r = 1e-9
             cAmp = cAmp / r
