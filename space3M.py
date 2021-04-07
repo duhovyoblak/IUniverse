@@ -372,7 +372,8 @@ class Space3M:
                  
                  'reAmp' :{'dim':'Amp.re' , 'unit':'', 'coeff':1},
                  'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1},  
-                 'abAmp' :{'dim':'Amp'    , 'unit':'', 'coeff':1}  
+                 'abAmp' :{'dim':'Amp'    , 'unit':'', 'coeff':1},  
+                 'P'     :{'dim':'real'   , 'unit':'', 'coeff':1}  
                }
         
         #----------------------------------------------------------------------
@@ -382,7 +383,7 @@ class Space3M:
                 'reDt' :[], 'imDt' :[], 'abDt' :[],
                 'phi'  :[],
                 'reDs' :[], 'imDs' :[], 'abDs' :[],
-                'reAmp':[], 'imAmp':[], 'abAmp':[]  }
+                'reAmp':[], 'imAmp':[], 'abAmp':[], 'P' :[] }
         
         toret = { 'meta':meta, 'data':data }
         
@@ -413,7 +414,10 @@ class Space3M:
             
             toret['data']['reAmp'].append( cell['val']['cAmp'].real  )
             toret['data']['imAmp'].append( cell['val']['cAmp'].imag  )
-            toret['data']['abAmp'].append( abs(cell['val']['cAmp'])  )
+            
+            abAmp =  abs(cell['val']['cAmp'])
+            toret['data']['abAmp'].append( abAmp                     )
+            toret['data']['P'    ].append( abAmp * abAmp             )
             i +=1
         
         #----------------------------------------------------------------------

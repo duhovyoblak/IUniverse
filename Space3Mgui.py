@@ -63,10 +63,10 @@ class Space3Mgui:
         self.axes    = {1:'Scatter', 2:'Quiver', 3:'3D projection'}
         self.actAxe  = 1
         
-        self.values  = { 1:'x',      2:'y',      3:'z',    4:'t', 
-                         5:'reDs',   6:'imDs',   7:'abDs', 8:'phi', 
-                         9:'reDt',  10:'imDt',  11:'abDt', 
-                        12:'reAmp', 13:'imAmp', 14:'abAmp'}
+        self.values  = { 1:'x',      2:'y',      3:'z',      4:'t', 
+#                         5:'reDs',   6:'imDs',   7:'abDs',  
+                         5:'reDt',   6:'imDt',   7:'abDt',   8:'phi',
+                         9:'reAmp', 10:'imAmp', 11:'abAmp', 12:'P'}
 
         self.actValX = 1
         self.actValY = 4
