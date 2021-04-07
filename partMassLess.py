@@ -34,7 +34,7 @@ class PartMassLess(PartCommon):
     #==========================================================================
     # Constructor & utilities
     #--------------------------------------------------------------------------
-    def __init__(self, name, pos, eV):
+    def __init__(self, name, pos, eV=1):
         "Call constructor of PartMassLess and initialise it"
 
         journal.I( 'PartMassLess constructor for {}...'.format(name), 10 )

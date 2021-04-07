@@ -29,7 +29,7 @@ if __name__ =='__main__':
     st.createSpace( {'xMin':-30, 'xMax':30, 'yMin':-10, 'yMax':50, 'zMin':0, 'zMax':1, 'tMin':-20, 'tMax':50 }, 0.05 )
 
     # Vytvorim castice    
-    p = PartMassLess( 'p1', {'x':0, 'y':0, 'z':0, 't':0},  510998.950 )
+    p = PartMassLess( 'p1', {'x':0, 'y':0, 'z':0, 't':0} )
     p.setLambda(0.55)
     st.addPart(p)
 

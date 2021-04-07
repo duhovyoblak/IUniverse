@@ -64,9 +64,8 @@ class Space3Mgui:
         self.actAxe  = 1
         
         self.values  = { 1:'x',      2:'y',      3:'z',      4:'t', 
-#                         5:'reDs',   6:'imDs',   7:'abDs',  
                          5:'reDt',   6:'imDt',   7:'abDt',   8:'phi',
-                         9:'reAmp', 10:'imAmp', 11:'abAmp', 12:'P'}
+                         9:'reAmp', 10:'imAmp', 11:'abAmp', 12:'Prob'}
 
         self.actValX = 1
         self.actValY = 4
@@ -341,7 +340,7 @@ class Space3Mgui:
         if self.actAxe == 1:
             
             self.ax = self.fig.add_subplot(1,1,1)
-            self.ax.set_title("{}".format( self.axes[self.actAxe]), fontsize=14)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
@@ -352,7 +351,7 @@ class Space3Mgui:
         elif self.actAxe == 2:
             
             self.ax = self.fig.add_subplot(1,1,1)
-            self.ax.set_title("Amplitude's phase in <0, 2Pi>", fontsize=14)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
@@ -361,7 +360,7 @@ class Space3Mgui:
         elif self.actAxe == 3:
             
             self.ax = self.fig.add_subplot(1,1,1, projection='3d')
-            self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )

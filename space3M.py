@@ -375,17 +375,17 @@ class Space3M:
                  'reAmp' :{'dim':'Amp.re' , 'unit':'', 'coeff':1},
                  'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1},  
                  'abAmp' :{'dim':'Amp'    , 'unit':'', 'coeff':1},  
-                 'P'     :{'dim':'real'   , 'unit':'', 'coeff':1}  
+                 'Prob'  :{'dim':'real'   , 'unit':'', 'coeff':1}  
                }
         
         #----------------------------------------------------------------------
         # Data section
-        data = {'gx'   :[], 'gy'   :[],    'gz':[], 'gt':[], 
-                'x'    :[], 'y'    :[],    'z' :[], 't' :[], 
+        data = {'gx'   :[], 'gy'   :[],    'gz':[], 'gt'  :[], 
+                'x'    :[], 'y'    :[],    'z' :[], 't'   :[], 
                 'reDt' :[], 'imDt' :[], 'abDt' :[],
                 'phi'  :[],
                 'reDs' :[], 'imDs' :[], 'abDs' :[],
-                'reAmp':[], 'imAmp':[], 'abAmp':[], 'P' :[] }
+                'reAmp':[], 'imAmp':[], 'abAmp':[], 'Prob':[] }
         
         toret = { 'meta':meta, 'data':data }
         
@@ -419,7 +419,7 @@ class Space3M:
             
             abAmp =  abs(cell['val']['cAmp'])
             toret['data']['abAmp'].append( abAmp                     )
-            toret['data']['P'    ].append( abAmp * abAmp             )
+            toret['data']['Prob' ].append( abAmp * abAmp             )
             i +=1
         
         #----------------------------------------------------------------------
