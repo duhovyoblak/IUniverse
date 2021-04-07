@@ -300,10 +300,17 @@ class Space3M:
         i=0
         for cell in self.act.values():
             
+            # ziskanie pootocenia amplitudy
             dPos = self.getPosInt( partPos, cell['pos'] )
             phi  = part.getPhi(dPos)
             cAmp = cm.exp(complex(0,phi))
             
+            # pokles amplitudy so vzdialenostou
+            r    = abs(dPos['cDt'])
+            if r < 1e-9: r = 1e-9
+            cAmp = cAmp / r
+        
+            # superpozicia do priestoru
             cell['val']['cAmp'] = cell['val']['cAmp'] + cAmp
             i += 1
 
