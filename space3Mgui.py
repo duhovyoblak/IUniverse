@@ -15,6 +15,7 @@ from siqo_lib import journal
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits                      import mplot3d
 
+import cmath             as cm
 import numpy             as np
 import matplotlib.pyplot as plt
 import tkinter           as tk
@@ -30,7 +31,7 @@ _DPI            = 100
 _FIG_W          = 0.8
 _FIG_H          = 1.0
 
-_SC_RED         = 1.4
+_SC_RED         = 0.3
 
 _BTN_AXE_W      = 0.81
 _BTN_AXE_H      = 0.03
@@ -355,7 +356,16 @@ class Space3Mgui:
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
-            self.ax.quiver( X, Y, U, V )
+
+            # Farebna skala podla fazy
+            arr = np.c_[U,V]
+            f   = []
+            for c in arr: f.append(cm.phase(complex(c[0], c[1])) )
+            C = np.array(f)
+            
+            # Vykreslenie axes
+            quiv = self.ax.quiver( X, Y, U, V, C, cmap='RdYlBu_r' )
+            self.fig.colorbar(quiv, ax=self.ax)
             
         elif self.actAxe == 3:
             
@@ -369,18 +379,12 @@ class Space3Mgui:
             a = U.min()
             b = U.max()
             
-            if abs(a) > abs(b): 
-                vMax = a * _SC_RED
-                vMin = b
-            else              : 
-                vMax = b * _SC_RED
-                vMin = a
-                
-            if a * b > 0: vMin = vMin / _SC_RED
-            else        : vMin = vMin * _SC_RED
-                
-            self.ax.set_zlim(vMin, vMax)
+            if abs(a) > abs(b): dr = _SC_RED * abs(a)
+            else              : dr = _SC_RED * abs(b)
             
+            self.ax.set_zlim(a-dr, b+dr)
+            
+            # Vykreslenie axes
             surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlBu_r', antialiased=False)
             self.fig.colorbar(surf, ax=self.ax)
         
