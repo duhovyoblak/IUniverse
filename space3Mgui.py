@@ -34,7 +34,7 @@ _FIG_H          = 1.0    # Figure height
 _SC_RED         = 0.3    # Reduction of z-axe in 3D projection
 
 _BTN_AXE_W      = 0.805  # Axe's buttons start width
-_BTN_AXE_H      = 0.005  # Axe's buttons start height
+_BTN_AXE_H      = 0.001  # Axe's buttons start height
 
 _BTN_VAL_W      = 0.805  # Value's buttons start width
 _BTN_VAL_H      = 0.12   # Value's buttons start height
@@ -65,8 +65,8 @@ class Space3Mgui:
         self.actAxe  = 1
         
         self.values  = { 1:'x',      2:'y',      3:'z',      4:'t', 
-                         5:'reDt',   6:'imDt',   7:'abDt',   8:'phi',
-                         9:'reAmp', 10:'imAmp', 11:'abAmp', 12:'Prob'}
+                         5:'reDt',   6:'imDt',   7:'abDt',   
+                         8:'reAmp',  9:'imAmp', 10:'abAmp', 11:'Prob'}
 
         self.actValX = 1
         self.actValY = 4

@@ -190,7 +190,7 @@ class Space3M:
         dPos = self.getPosInt(0, pos)
         
         cell = {'pos': pos, 
-                'val': { 'cDs':dPos['cDs'], 'cDt':dPos['cDt'], 'phi':dPos['dt']-sqrt(dPos['dr2']), 'cAmp':complex(0,0) },
+                'val': { 'cDs':dPos['cDs'], 'cDt':dPos['cDt'], 'cAmp':complex(0,0) },
                 'opt': opt }
 
         self.act[id] = cell
@@ -246,7 +246,7 @@ class Space3M:
             print('----------------------------------------------------------------------------------------------------')
             print( "Cell ID = {}".format(id) )
             print( "  x = {:e},                 y = {:e},                 z = {:e}, t = {:e}".format(p['x'], p['y'], p['z'] ,p['t']) )
-            print( "cDs = {:e}, cDt = {:e}, phi = {:e}".format( v['cDs'], v['cDt'], v['phi'] ) )
+            print( "cDs = {:e}, cDt = {:e}".format( v['cDs'], v['cDt'] ) )
         
         except KeyError:
             journal.M( "Space3M {} can't print cell ID = {}. No such cell".format(self.name, id), 9)
@@ -366,8 +366,6 @@ class Space3M:
                  'imDs'  :{'dim':'m.im'   , 'unit':'', 'coeff':1},
                  'abDs'  :{'dim':'m'      , 'unit':'', 'coeff':1},
 
-                 'phi'   :{'dim':'rad'    , 'unit':'', 'coeff':1},
-
                  'reDt'  :{'dim':'s.re'   , 'unit':'', 'coeff':1},
                  'imDt'  :{'dim':'s.im'   , 'unit':'', 'coeff':1},
                  'abDt'  :{'dim':'s'      , 'unit':'', 'coeff':1},
@@ -383,7 +381,6 @@ class Space3M:
         data = {'gx'   :[], 'gy'   :[],    'gz':[], 'gt'  :[], 
                 'x'    :[], 'y'    :[],    'z' :[], 't'   :[], 
                 'reDt' :[], 'imDt' :[], 'abDt' :[],
-                'phi'  :[],
                 'reDs' :[], 'imDs' :[], 'abDs' :[],
                 'reAmp':[], 'imAmp':[], 'abAmp':[], 'Prob':[] }
         
@@ -407,8 +404,6 @@ class Space3M:
             toret['data']['reDs' ].append( cell['val']['cDs' ].real  )
             toret['data']['imDs' ].append( cell['val']['cDs' ].imag  )
             toret['data']['abDs' ].append( abs(cell['val']['cDs'])   )
-
-            toret['data']['phi'  ].append( cell['val']['phi' ]       )
 
             toret['data']['reDt' ].append( cell['val']['cDt' ].real  )
             toret['data']['imDt' ].append( cell['val']['cDt' ].imag  )
@@ -447,7 +442,7 @@ class Space3M:
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.35')
+print('Minkowski space class ver 0.36')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------
