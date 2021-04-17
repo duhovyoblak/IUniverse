@@ -28,19 +28,19 @@ import tkinter           as tk
 _WIN            = '1300x740'
 _DPI            = 100
 
-_FIG_W          = 0.8
-_FIG_H          = 1.0
+_FIG_W          = 0.8    # Figure width
+_FIG_H          = 1.0    # Figure height
 
-_SC_RED         = 0.3
+_SC_RED         = 0.3    # Reduction of z-axe in 3D projection
 
-_BTN_AXE_W      = 0.81
-_BTN_AXE_H      = 0.03
+_BTN_AXE_W      = 0.805  # Axe's buttons start width
+_BTN_AXE_H      = 0.03   # Axe's buttons start height
 
-_BTN_VAL_W      = 0.81
-_BTN_VAL_H      = 0.10
+_BTN_VAL_W      = 0.805  # Value's buttons start width
+_BTN_VAL_H      = 0.12   # Value's buttons start height
 
-_BTN_DIS_W      = 0.1
-_BTN_DIS_H      = 0.025
+_BTN_DIS_W      = 0.1    # Button's second column width separation
+_BTN_DIS_H      = 0.025  # Button's rows separation
 
 #==============================================================================
 # class Space3Mgui
@@ -378,10 +378,7 @@ class Space3Mgui:
             # Reduction z-axis 
             a = U.min()
             b = U.max()
-            
-            if abs(a) > abs(b): dr = _SC_RED * abs(a)
-            else              : dr = _SC_RED * abs(b)
-            
+            dr = _SC_RED * (b-a)
             self.ax.set_zlim(a-dr, b+dr)
             
             # Vykreslenie axes
