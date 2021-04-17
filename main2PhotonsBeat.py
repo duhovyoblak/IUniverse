@@ -25,7 +25,7 @@ if __name__ =='__main__':
     journal.I( 'Main loop' )
     
     # Vytvorim testovaci space3M
-    st = Space3M('2PhotonsRes')
+    st = Space3M('2PhotonsBeat')
     st.createSpace( {'xMin':-30, 'xMax':30, 'yMin':-10, 'yMax':50, 'zMin':0, 'zMax':1, 'tMin':-20, 'tMax':50 }, 0.05 )
     
     # Vytvorim castice

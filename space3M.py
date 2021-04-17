@@ -190,7 +190,7 @@ class Space3M:
         dPos = self.getPosInt(0, pos)
         
         cell = {'pos': pos, 
-                'val': { 'cDs':dPos['cDs'], 'cDt':dPos['cDt'], 'cAmp':complex(0,0) },
+                'val': { 'cDs':dPos['cDs'], 'cDt':dPos['cDt'], 'cAmN':complex(0,0), 'cAmR':complex(0,0) },
                 'opt': opt }
 
         self.act[id] = cell
@@ -305,15 +305,19 @@ class Space3M:
             phi  = part.getPhi(dPos)
             cAmp = cm.exp(complex(0,phi))
             
-            # pokles amplitudy so vzdialenostou
-#            r    = 1
-#            r    = dPos['dr' ]
+            # pokles amplitudy s Nerelativistickou vzdialenostou
+            r    = dPos['dr' ]
+            if r < 1e-1: r = 1e-1
+            cAmpN = cAmp / r
+        
+            # pokles amplitudy s Relativistickou vzdialenostou
             r    = abs(dPos['cDt'])
             if r < 1e-9: r = 1e-9
-            cAmp = cAmp / r
-        
+            cAmpR = cAmp / r
+
             # superpozicia do priestoru
-            cell['val']['cAmp'] = cell['val']['cAmp'] + cAmp
+            cell['val']['cAmN'] = cell['val']['cAmN'] + cAmpN
+            cell['val']['cAmR'] = cell['val']['cAmR'] + cAmpR
             i += 1
 
         journal.M( 'Space3M {} partToSpace for {} applied for {} cells'.format(self.name, part.getName(), i), 10)
@@ -362,17 +366,18 @@ class Space3M:
                  'z'     :{'dim':'m'      , 'unit':'', 'coeff':1, 'min':0, 'max':0 },
                  't'     :{'dim':'s'      , 'unit':'', 'coeff':1, 'min':0, 'max':0 },
                  
-                 'reDs'  :{'dim':'m.re'   , 'unit':'', 'coeff':1},
-                 'imDs'  :{'dim':'m.im'   , 'unit':'', 'coeff':1},
-                 'abDs'  :{'dim':'m'      , 'unit':'', 'coeff':1},
-
                  'reDt'  :{'dim':'s.re'   , 'unit':'', 'coeff':1},
                  'imDt'  :{'dim':'s.im'   , 'unit':'', 'coeff':1},
                  'abDt'  :{'dim':'s'      , 'unit':'', 'coeff':1},
                  
-                 'reAmp' :{'dim':'Amp.re' , 'unit':'', 'coeff':1},
-                 'imAmp' :{'dim':'Amp.im' , 'unit':'', 'coeff':1},  
-                 'abAmp' :{'dim':'Amp'    , 'unit':'', 'coeff':1},  
+                 'reAmN' :{'dim':'AmN.re' , 'unit':'', 'coeff':1},
+                 'imAmN' :{'dim':'AmN.im' , 'unit':'', 'coeff':1},  
+                 'abAmN' :{'dim':'AmN'    , 'unit':'', 'coeff':1},
+                 
+                 'reAmR' :{'dim':'AmR.re' , 'unit':'', 'coeff':1},
+                 'imAmR' :{'dim':'AmR.im' , 'unit':'', 'coeff':1},  
+                 'abAmR' :{'dim':'AmR'    , 'unit':'', 'coeff':1},
+                 
                  'Prob'  :{'dim':'real'   , 'unit':'', 'coeff':1}  
                }
         
@@ -381,8 +386,11 @@ class Space3M:
         data = {'gx'   :[], 'gy'   :[],    'gz':[], 'gt'  :[], 
                 'x'    :[], 'y'    :[],    'z' :[], 't'   :[], 
                 'reDt' :[], 'imDt' :[], 'abDt' :[],
-                'reDs' :[], 'imDs' :[], 'abDs' :[],
-                'reAmp':[], 'imAmp':[], 'abAmp':[], 'Prob':[] }
+                
+                'reAmN':[], 'imAmN':[], 'abAmN':[], 
+                'reAmR':[], 'imAmR':[], 'abAmR':[], 
+
+                'Prob':[] }
         
         toret = { 'meta':meta, 'data':data }
         
@@ -401,20 +409,20 @@ class Space3M:
             toret['data']['z'    ].append( cell['pos']['z'   ]       )
             toret['data']['t'    ].append( cell['pos']['t'   ]       )
             
-            toret['data']['reDs' ].append( cell['val']['cDs' ].real  )
-            toret['data']['imDs' ].append( cell['val']['cDs' ].imag  )
-            toret['data']['abDs' ].append( abs(cell['val']['cDs'])   )
-
             toret['data']['reDt' ].append( cell['val']['cDt' ].real  )
             toret['data']['imDt' ].append( cell['val']['cDt' ].imag  )
             toret['data']['abDt' ].append( abs(cell['val']['cDt'])   )
             
-            toret['data']['reAmp'].append( cell['val']['cAmp'].real  )
-            toret['data']['imAmp'].append( cell['val']['cAmp'].imag  )
+            toret['data']['reAmN'].append( cell['val']['cAmN'].real  )
+            toret['data']['imAmN'].append( cell['val']['cAmN'].imag  )
+            toret['data']['abAmN'].append( abs(cell['val']['cAmN'])  )
             
-            abAmp =  abs(cell['val']['cAmp'])
-            toret['data']['abAmp'].append( abAmp                     )
-            toret['data']['Prob' ].append( abAmp * abAmp             )
+            toret['data']['reAmR'].append( cell['val']['cAmR'].real  )
+            toret['data']['imAmR'].append( cell['val']['cAmR'].imag  )
+            toret['data']['abAmR'].append( abs(cell['val']['cAmR'])  )
+            
+            prob = abs(cell['val']['cAmR'])
+            toret['data']['Prob' ].append( prob * prob               )
             i +=1
         
         #----------------------------------------------------------------------
@@ -442,7 +450,7 @@ class Space3M:
         return toret
     
 #------------------------------------------------------------------------------
-print('Minkowski space class ver 0.36')
+print('Minkowski space class ver 0.37')
 #==============================================================================
 #                              END OF FILE
 #------------------------------------------------------------------------------

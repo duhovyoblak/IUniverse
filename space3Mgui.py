@@ -64,14 +64,16 @@ class Space3Mgui:
         self.axes    = {1:'Scatter chart', 2:'Quiver chart', 3:'3D projection', 4:'Line chart'}
         self.actAxe  = 1
         
-        self.values  = { 1:'x',      2:'y',      3:'z',      4:'t', 
-                         5:'reDt',   6:'imDt',   7:'abDt',   
-                         8:'reAmp',  9:'imAmp', 10:'abAmp', 11:'Prob'}
+        self.values  = {  1:'x',      2:'y',      3:'z',      4:'t', 
+                          5:'reDt',   6:'imDt',   7:'abDt',   
+                          8:'reAmN',  9:'imAmN', 10:'abAmN', 
+                         11:'reAmR', 12:'imAmR', 13:'abAmR', 
+                         14:'Prob'}
 
         self.actValX = 1
         self.actValY = 4
         self.actValU = 7
-        self.actValV = 11
+        self.actValV = 13
         
         self.setActValS()
         
