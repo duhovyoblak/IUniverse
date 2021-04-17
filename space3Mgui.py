@@ -34,7 +34,7 @@ _FIG_H          = 1.0    # Figure height
 _SC_RED         = 0.3    # Reduction of z-axe in 3D projection
 
 _BTN_AXE_W      = 0.805  # Axe's buttons start width
-_BTN_AXE_H      = 0.03   # Axe's buttons start height
+_BTN_AXE_H      = 0.005  # Axe's buttons start height
 
 _BTN_VAL_W      = 0.805  # Value's buttons start width
 _BTN_VAL_H      = 0.12   # Value's buttons start height
@@ -61,7 +61,7 @@ class Space3Mgui:
         self.space3M = space
         self.title   = self.space3M.name
         
-        self.axes    = {1:'Scatter', 2:'Quiver', 3:'3D projection'}
+        self.axes    = {1:'Scatter chart', 2:'Quiver chart', 3:'3D projection', 4:'Line chart'}
         self.actAxe  = 1
         
         self.values  = { 1:'x',      2:'y',      3:'z',      4:'t', 
@@ -109,16 +109,12 @@ class Space3Mgui:
         
         self.butAxeMap = tk.IntVar()
         
-        self.butAx1 = tk.Radiobutton(win, text='Scatter chart', variable=self.butAxeMap, value=1, command=self.onButAxe)
-        self.butAx1.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 0 * _BTN_DIS_H) )
+        for i, val in self.axes.items():
+            self.butA = tk.Radiobutton(win, text="{}".format(val), variable=self.butAxeMap, value=i, command=self.onButAxe)
+            self.butA.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + i * _BTN_DIS_H))
 
-        self.butAx2 = tk.Radiobutton(win, text='Quiver chart',  variable=self.butAxeMap, value=2, command=self.onButAxe)
-        self.butAx2.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 1 * _BTN_DIS_H) )
-
-        self.butAx3 = tk.Radiobutton(win, text='3D projection', variable=self.butAxeMap, value=3, command=self.onButAxe)
-        self.butAx3.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 2 * _BTN_DIS_H) )
-
-        self.butAx1.select()
+        self.butA.select()
+        self.butAxeMap.set(self.actAxe)
         
         #----------------------------------------------------------------------
         # Value buttons X setup
@@ -338,7 +334,7 @@ class Space3Mgui:
         valX = self.values[self.actValX]
         valY = self.values[self.actValY]
 
-        if self.actAxe == 1:
+        if self.actAxe == 1:    # Scatter plot
             
             self.ax = self.fig.add_subplot(1,1,1)
             self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
@@ -349,7 +345,7 @@ class Space3Mgui:
             sctr = self.ax.scatter( x=X, y=Y, c=U, cmap='RdYlBu_r')
             self.fig.colorbar(sctr, ax=self.ax)
             
-        elif self.actAxe == 2:
+        elif self.actAxe == 2:  # Quiver plot
             
             self.ax = self.fig.add_subplot(1,1,1)
             self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
@@ -367,7 +363,7 @@ class Space3Mgui:
             quiv = self.ax.quiver( X, Y, U, V, C, cmap='RdYlBu_r' )
             self.fig.colorbar(quiv, ax=self.ax)
             
-        elif self.actAxe == 3:
+        elif self.actAxe == 3:  # 3D projection
             
             self.ax = self.fig.add_subplot(1,1,1, projection='3d')
             self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
@@ -384,6 +380,18 @@ class Space3Mgui:
             # Vykreslenie axes
             surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlBu_r', antialiased=False)
             self.fig.colorbar(surf, ax=self.ax)
+        
+        elif self.actAxe == 4:  # Line plot
+        
+            self.ax = self.fig.add_subplot(1,1,1)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
+            self.ax.grid(True)
+            self.ax.set_xlabel( self.getDataLabel(valX) )
+            self.ax.set_ylabel( self.getDataLabel(valY) )
+            
+            self.ax.scatter( x=X, y=Y, c=U, cmap='RdYlBu_r')
+        
+        else: journal.M( 'Space3Mgui {} show error: Unknown axe {}'.format(self.title, self.actAxe), 10 )
         
         # Vykreslenie noveho grafu
         self.fig.tight_layout()
