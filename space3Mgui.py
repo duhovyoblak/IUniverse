@@ -397,7 +397,7 @@ class Space3Mgui:
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
             
-            self.ax.scatter( x=X, y=Y, c=U, cmap='RdYlBu_r')
+            self.ax.plot( X, Y)
         
         else: journal.M( 'Space3Mgui {} show error: Unknown axe {}'.format(self.title, self.actAxe), 10 )
         
