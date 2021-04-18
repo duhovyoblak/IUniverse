@@ -168,16 +168,17 @@ class Space3Mgui:
         #----------------------------------------------------------------------
         # Slider for slider axis Z setup
         
-        sMin = self.meta['g'+self.values[self.actValS]]['min']
-        sMax = self.meta['g'+self.values[self.actValS]]['max']
+        sMin = self.space3M.shapeMin()
+        sMax = self.space3M.shapeMax()
         
-        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Data are sliced by ")
+        self.sldS = tk.Scale( win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, 
+                              command=self.onSlider, label="Dimension " )
         self.sldS.place(x=self.w * 0.81, y=self.h * 0.9)
         self.sVal = 0
         
         self.sLabMap = tk.StringVar()
         self.sLab = tk.Label(win, textvariable = self.sLabMap)
-        self.sLab.place(x=self.w * 0.89, y=self.h * 0.9)
+        self.sLab.place(x=self.w * 0.86, y=self.h * 0.9)
         
         self.sLabMap.set("Test")
         
@@ -190,13 +191,14 @@ class Space3Mgui:
         win.mainloop()       # Start listening for events
 
     #--------------------------------------------------------------------------
-    def sliderSetup(self):
+    def sliderShow(self):
 
         gv  = self.sVal
         key = self.values[self.actValS]
-        v   = self.getValByGrid(gv, key)
+        val = self.getValByGrid(gv, key)
+        uni = self.getDataUnit(key)
         
-        self.sLabMap.set("dim '{}' with value {:.3f}".format(key, v) )
+        self.sLabMap.set("{} has value {:.3f} {}".format(key, val, uni) )
     
     #==========================================================================
     # Tools for figure setting
@@ -231,11 +233,16 @@ class Space3Mgui:
         journal.O( 'Space3Mgui {} reScale done'.format(self.title), 10 )
     
     #--------------------------------------------------------------------------
+    def getDataUnit(self, key):
+        "Return data unit for given data's key"
+        
+        return "[{}{}]".format(self.meta[key]['unit'], self.meta[key]['dim' ])
+    
+    #--------------------------------------------------------------------------
     def getDataLabel(self, key):
         "Return data label for given data's key"
         
-        return "${}$ [{}{}]".format(key, self.meta[key]['unit'], 
-                                         self.meta[key]['dim' ])
+        return "${}$ {}".format(key, self.getDataUnit(key))
     
     #--------------------------------------------------------------------------
     def getValByGrid(self, gv, key):
@@ -331,7 +338,7 @@ class Space3Mgui:
         (X, Y, U, V) = self.getDataSlice()
     
         # Priprava novych axes
-        self.sliderSetup()
+        self.sliderShow()
         valX = self.values[self.actValX]
         valY = self.values[self.actValY]
 
@@ -437,10 +444,20 @@ class Space3Mgui:
     
     #--------------------------------------------------------------------------
     def onSlider(self, new_val):
-        "Resolve change of Slider"
+        "Resolve change in Slider's value for given dimension"
 
-        self.sVal = self.sldS.get()
-        self.show()
+        key  = self.values[self.actValS]
+        newS = self.sldS.get()
+        
+        # Check if new slider's value is applicable
+        if newS < self.space3M.shapeMin(key) or newS >= self.space3M.shapeMax(key):
+            
+            journal.M( 'Space3Mgui {} onSlider: {} is outside grid for dim {}'.format(self.title, newS, key), 10 )
+            self.sldS.set(self.sVal)
+            
+        else:
+            self.sVal = self.sldS.get()
+            self.show()
     
     #--------------------------------------------------------------------------
     def on_click(self, event):

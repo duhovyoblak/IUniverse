@@ -82,6 +82,32 @@ class Space3M:
         if self.act == self.blur: return 'blur'
 
     #--------------------------------------------------------------------------
+    def shapeMin(self, key='_'):
+        "Return minimum grid's value of shape for given key or global minimum"
+        
+        if key != '_': toret = self.shape[ key+'Min' ]
+        else:
+            toret = self.shape['xMin']
+            if toret > self.shape['yMin'] : toret = self.shape['yMin']
+            if toret > self.shape['zMin'] : toret = self.shape['zMin']
+            if toret > self.shape['tMin'] : toret = self.shape['tMin']
+            
+        return toret
+        
+    #--------------------------------------------------------------------------
+    def shapeMax(self, key='_'):
+        "Return maximum grid's value of shape for given key or global maximum"
+        
+        if key != '_': toret = self.shape[ key+'Max' ]
+        else:
+            toret = self.shape['xMax']
+            if toret < self.shape['yMax'] : toret = self.shape['yMax']
+            if toret < self.shape['zMax'] : toret = self.shape['zMax']
+            if toret < self.shape['tMax'] : toret = self.shape['tMax']
+            
+        return toret
+
+    #--------------------------------------------------------------------------
     def setZoom(self, mpg, spg=0):
         "Set meters per grid and seconds per grid parameters"
 
