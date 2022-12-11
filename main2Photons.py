@@ -25,27 +25,23 @@ if __name__ =='__main__':
     journal.I( 'Main loop' )
     
     # Vytvorim testovaci space3M
-    st = Space3M('test')
-    st.createSpace( {'xMin':-30, 'xMax':30, 'yMin':-10, 'yMax':40, 'zMin':0, 'zMax':1, 'tMin':-20, 'tMax':40 }, 0.05 )
+    st = Space3M('2Photons')
+    st.createSpace( {'xMin':-30, 'xMax':30, 'yMin':-10, 'yMax':50, 'zMin':0, 'zMax':1, 'tMin':-20, 'tMax':50 }, 0.05 )
     
-    p = PartMassLess( 'p1', {'x':-0.6, 'y':0, 'z':0, 't':0},  510998.950 )
-    p.setLambda(0.8)
+    # Vytvorim castice
+    p = PartMassLess( 'p1', {'x':-0.86, 'y':0, 'z':0, 't':0} )
+    p.setLambda(0.55)
     st.addPart(p)
 
-    r = PartMassLess( 'p2', {'x':0.6, 'y':0, 'z':0, 't':0},  510998.950 )
-    r.setLambda(0.8)
+    r = PartMassLess( 'p2', {'x':0.86, 'y':0, 'z':0, 't':0} )
+    r.setLambda(0.55)
     st.addPart(r)
 
-
-
+    # Superponujem castice do priestoru
     st.partsUp()
-    
-    js = st.getJson()
     
     # Vytvorim GUI
     gui = Space3Mgui(st)
-    
-    
     
     journal.O('Main end')
     

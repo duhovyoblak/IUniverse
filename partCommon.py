@@ -6,11 +6,10 @@
 #    grid position means position in numpy-like 4D array as integers 0..ix, 0..iy, 0..iz, 0..it
 #
 #    phi means argument (omega*t - k*x) as real value in radians
-#    phs means phi mod 2*PI in radians
 #
 #------------------------------------------------------------------------------
 from siqo_lib      import journal
-from iuniverse_lib import _2PI, _C, _H, _EV_J
+from iuniverse_lib import _2PI, _C, _C2, _H, _EV_J
 
 from abc           import ABC, abstractmethod
 from math          import sqrt, exp

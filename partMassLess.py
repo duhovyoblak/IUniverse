@@ -6,7 +6,6 @@
 #    grid position means position in numpy-like 4D array as integers 0..ix, 0..iy, 0..iz, 0..it
 #
 #    phi means argument (omega*t - k*x) as real value in radians
-#    phs means phi mod 2*PI in radians
 #
 #------------------------------------------------------------------------------
 from siqo_lib      import journal
@@ -34,7 +33,7 @@ class PartMassLess(PartCommon):
     #==========================================================================
     # Constructor & utilities
     #--------------------------------------------------------------------------
-    def __init__(self, name, pos, eV):
+    def __init__(self, name, pos, eV=1):
         "Call constructor of PartMassLess and initialise it"
 
         journal.I( 'PartMassLess constructor for {}...'.format(name), 10 )

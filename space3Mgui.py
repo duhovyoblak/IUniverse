@@ -6,7 +6,6 @@
 #    grid position means position in numpy-like 4D array as integers 0..ix, 0..iy, 0..iz, 0..it
 #
 #    phi means argument (omega*t - k*x) as real value in radians
-#    phs means phi mod 2*PI in radians
 #
 #------------------------------------------------------------------------------
 from siqo_lib import journal
@@ -15,6 +14,7 @@ from siqo_lib import journal
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits                      import mplot3d
 
+import cmath             as cm
 import numpy             as np
 import matplotlib.pyplot as plt
 import tkinter           as tk
@@ -23,22 +23,23 @@ import tkinter           as tk
 # package's constants
 #------------------------------------------------------------------------------
 
-_WIN            = '1680x1050'
+#_WIN            = '1680x1050'
+_WIN            = '1300x740'
 _DPI            = 100
 
-_FIG_W          = 0.8
-_FIG_H          = 1.0
+_FIG_W          = 0.8    # Figure width
+_FIG_H          = 1.0    # Figure height
 
-_SC_RED         = 1.4
+_SC_RED         = 0.3    # Reduction of z-axe in 3D projection
 
-_BTN_AXE_W      = 0.81
-_BTN_AXE_H      = 0.03
+_BTN_AXE_W      = 0.805  # Axe's buttons start width
+_BTN_AXE_H      = 0.001  # Axe's buttons start height
 
-_BTN_VAL_W      = 0.81
-_BTN_VAL_H      = 0.10
+_BTN_VAL_W      = 0.805  # Value's buttons start width
+_BTN_VAL_H      = 0.12   # Value's buttons start height
 
-_BTN_DIS_W      = 0.1
-_BTN_DIS_H      = 0.025
+_BTN_DIS_W      = 0.1    # Button's second column width separation
+_BTN_DIS_H      = 0.025  # Button's rows separation
 
 #==============================================================================
 # class Space3Mgui
@@ -59,18 +60,19 @@ class Space3Mgui:
         self.space3M = space
         self.title   = self.space3M.name
         
-        self.axes    = {1:'Scatter', 2:'Quiver', 3:'3D projection'}
+        self.axes    = {1:'Scatter chart', 2:'Quiver chart', 3:'3D projection', 4:'Line chart'}
         self.actAxe  = 1
         
-        self.values  = { 1:'x',      2:'y',      3:'z',      4:'t', 
-#                         5:'reDs',   6:'imDs',   7:'abDs',  
-                         5:'reDt',   6:'imDt',   7:'abDt',   8:'phi',
-                         9:'reAmp', 10:'imAmp', 11:'abAmp', 12:'P'}
+        self.values  = {  1:'x',      2:'y',      3:'z',      4:'t', 
+                          5:'reDt',   6:'imDt',   7:'abDt',   
+                          8:'reAmN',  9:'imAmN', 10:'abAmN', 
+                         11:'reAmR', 12:'imAmR', 13:'abAmR', 
+                         14:'Prob'}
 
         self.actValX = 1
         self.actValY = 4
         self.actValU = 7
-        self.actValV = 11
+        self.actValV = 13
         
         self.setActValS()
         
@@ -108,16 +110,12 @@ class Space3Mgui:
         
         self.butAxeMap = tk.IntVar()
         
-        self.butAx1 = tk.Radiobutton(win, text='Scatter chart', variable=self.butAxeMap, value=1, command=self.onButAxe)
-        self.butAx1.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 0 * _BTN_DIS_H) )
+        for i, val in self.axes.items():
+            self.butA = tk.Radiobutton(win, text="{}".format(val), variable=self.butAxeMap, value=i, command=self.onButAxe)
+            self.butA.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + i * _BTN_DIS_H))
 
-        self.butAx2 = tk.Radiobutton(win, text='Quiver chart',  variable=self.butAxeMap, value=2, command=self.onButAxe)
-        self.butAx2.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 1 * _BTN_DIS_H) )
-
-        self.butAx3 = tk.Radiobutton(win, text='3D projection', variable=self.butAxeMap, value=3, command=self.onButAxe)
-        self.butAx3.place(x=self.w * _BTN_AXE_W, y = self.h * (_BTN_AXE_H + 2 * _BTN_DIS_H) )
-
-        self.butAx1.select()
+        self.butA.select()
+        self.butAxeMap.set(self.actAxe)
         
         #----------------------------------------------------------------------
         # Value buttons X setup
@@ -170,16 +168,17 @@ class Space3Mgui:
         #----------------------------------------------------------------------
         # Slider for slider axis Z setup
         
-        sMin = self.meta['g'+self.values[self.actValS]]['min']
-        sMax = self.meta['g'+self.values[self.actValS]]['max']
+        sMin = self.space3M.shapeMin()
+        sMax = self.space3M.shapeMax()
         
-        self.sldS = tk.Scale(win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, command=self.onSlider, label="Data are sliced by ")
+        self.sldS = tk.Scale( win, from_=sMin, to=sMax, resolution=1, orient=tk.HORIZONTAL, length=self.w*0.18, 
+                              command=self.onSlider, label="Dimension " )
         self.sldS.place(x=self.w * 0.81, y=self.h * 0.9)
         self.sVal = 0
         
         self.sLabMap = tk.StringVar()
         self.sLab = tk.Label(win, textvariable = self.sLabMap)
-        self.sLab.place(x=self.w * 0.89, y=self.h * 0.9)
+        self.sLab.place(x=self.w * 0.86, y=self.h * 0.9)
         
         self.sLabMap.set("Test")
         
@@ -192,13 +191,14 @@ class Space3Mgui:
         win.mainloop()       # Start listening for events
 
     #--------------------------------------------------------------------------
-    def sliderSetup(self):
+    def sliderShow(self):
 
         gv  = self.sVal
         key = self.values[self.actValS]
-        v   = self.getValByGrid(gv, key)
+        val = self.getValByGrid(gv, key)
+        uni = self.getDataUnit(key)
         
-        self.sLabMap.set("dim '{}' with value {:.3f}".format(key, v) )
+        self.sLabMap.set("{} has value {:.3f} {}".format(key, val, uni) )
     
     #==========================================================================
     # Tools for figure setting
@@ -233,11 +233,16 @@ class Space3Mgui:
         journal.O( 'Space3Mgui {} reScale done'.format(self.title), 10 )
     
     #--------------------------------------------------------------------------
+    def getDataUnit(self, key):
+        "Return data unit for given data's key"
+        
+        return "[{}{}]".format(self.meta[key]['unit'], self.meta[key]['dim' ])
+    
+    #--------------------------------------------------------------------------
     def getDataLabel(self, key):
         "Return data label for given data's key"
         
-        return "${}$ [{}{}]".format(key, self.meta[key]['unit'], 
-                                         self.meta[key]['dim' ])
+        return "${}$ {}".format(key, self.getDataUnit(key))
     
     #--------------------------------------------------------------------------
     def getValByGrid(self, gv, key):
@@ -333,14 +338,14 @@ class Space3Mgui:
         (X, Y, U, V) = self.getDataSlice()
     
         # Priprava novych axes
-        self.sliderSetup()
+        self.sliderShow()
         valX = self.values[self.actValX]
         valY = self.values[self.actValY]
 
-        if self.actAxe == 1:
+        if self.actAxe == 1:    # Scatter plot
             
             self.ax = self.fig.add_subplot(1,1,1)
-            self.ax.set_title("{}".format( self.axes[self.actAxe]), fontsize=14)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
@@ -348,19 +353,28 @@ class Space3Mgui:
             sctr = self.ax.scatter( x=X, y=Y, c=U, cmap='RdYlBu_r')
             self.fig.colorbar(sctr, ax=self.ax)
             
-        elif self.actAxe == 2:
+        elif self.actAxe == 2:  # Quiver plot
             
             self.ax = self.fig.add_subplot(1,1,1)
-            self.ax.set_title("Amplitude's phase in <0, 2Pi>", fontsize=14)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
-            self.ax.quiver( X, Y, U, V )
+
+            # Farebna skala podla fazy
+            arr = np.c_[U,V]
+            f   = []
+            for c in arr: f.append(cm.phase(complex(c[0], c[1])) )
+            C = np.array(f)
             
-        elif self.actAxe == 3:
+            # Vykreslenie axes
+            quiv = self.ax.quiver( X, Y, U, V, C, cmap='RdYlBu_r' )
+            self.fig.colorbar(quiv, ax=self.ax)
+            
+        elif self.actAxe == 3:  # 3D projection
             
             self.ax = self.fig.add_subplot(1,1,1, projection='3d')
-            self.ax.set_title("Phi angle as phi = omega*t - abs(k*r) in [rad]", fontsize=14)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
             self.ax.grid(True)
             self.ax.set_xlabel( self.getDataLabel(valX) )
             self.ax.set_ylabel( self.getDataLabel(valY) )
@@ -368,21 +382,24 @@ class Space3Mgui:
             # Reduction z-axis 
             a = U.min()
             b = U.max()
+            dr = _SC_RED * (b-a)
+            self.ax.set_zlim(a-dr, b+dr)
             
-            if abs(a) > abs(b): 
-                vMax = a * _SC_RED
-                vMin = b
-            else              : 
-                vMax = b * _SC_RED
-                vMin = a
-                
-            if a * b > 0: vMin = vMin / _SC_RED
-            else        : vMin = vMin * _SC_RED
-                
-            self.ax.set_zlim(vMin, vMax)
-            
+            # Vykreslenie axes
             surf = self.ax.plot_trisurf( X, Y, U, linewidth=0.2, cmap='RdYlBu_r', antialiased=False)
             self.fig.colorbar(surf, ax=self.ax)
+        
+        elif self.actAxe == 4:  # Line plot
+        
+            self.ax = self.fig.add_subplot(1,1,1)
+            self.ax.set_title("{}: {}".format(self.axes[self.actAxe], self.title), fontsize=14)
+            self.ax.grid(True)
+            self.ax.set_xlabel( self.getDataLabel(valX) )
+            self.ax.set_ylabel( self.getDataLabel(valY) )
+            
+            self.ax.plot( X, Y)
+        
+        else: journal.M( 'Space3Mgui {} show error: Unknown axe {}'.format(self.title, self.actAxe), 10 )
         
         # Vykreslenie noveho grafu
         self.fig.tight_layout()
@@ -427,10 +444,20 @@ class Space3Mgui:
     
     #--------------------------------------------------------------------------
     def onSlider(self, new_val):
-        "Resolve change of Slider"
+        "Resolve change in Slider's value for given dimension"
 
-        self.sVal = self.sldS.get()
-        self.show()
+        key  = self.values[self.actValS]
+        newS = self.sldS.get()
+        
+        # Check if new slider's value is applicable
+        if newS < self.space3M.shapeMin(key) or newS >= self.space3M.shapeMax(key):
+            
+            journal.M( 'Space3Mgui {} onSlider: {} is outside grid for dim {}'.format(self.title, newS, key), 10 )
+            self.sldS.set(self.sVal)
+            
+        else:
+            self.sVal = self.sldS.get()
+            self.show()
     
     #--------------------------------------------------------------------------
     def on_click(self, event):
